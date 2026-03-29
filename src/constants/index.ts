@@ -13,9 +13,9 @@ export const DEFAULT_PAGE_SIZE = 20
 export const LOT_PREFIX = {
   raw_material: 'RM',
   sub_material: 'SM',
-  semi_finished: 'SF',
+  filling: 'FL',
   finished: 'FP',
-  packaging: 'PK',
+  bulk: 'BK',
 } as const
 
 /** 사이드바 메뉴 구조 */
@@ -25,7 +25,7 @@ export const SIDEBAR_MENUS = [
     label: '대시보드',
     icon: 'LayoutDashboard',
     path: '/dashboard',
-    module: null, // 모든 사용자
+    module: null,
   },
   {
     id: 'master',
@@ -35,6 +35,18 @@ export const SIDEBAR_MENUS = [
       { id: 'items', label: '품목관리', path: '/master/items', module: 'inventory' as const },
       { id: 'partners', label: '거래처관리', path: '/master/partners', module: null },
       { id: 'warehouses', label: '창고관리', path: '/master/warehouses', module: 'inventory' as const },
+    ],
+  },
+  {
+    id: 'sales',
+    label: '영업관리',
+    icon: 'TrendingUp',
+    children: [
+      { id: 'quotation', label: '견적관리', path: '/sales/quotations', module: 'sales' as const },
+      { id: 'sales-order', label: '수주관리', path: '/sales/orders', module: 'sales' as const },
+      { id: 'shipment', label: '출하관리', path: '/sales/shipments', module: 'sales' as const },
+      { id: 'statement', label: '거래명세서', path: '/sales/statements', module: 'sales' as const },
+      { id: 'sales-analysis', label: '매출현황', path: '/sales/analysis', module: 'sales' as const },
     ],
   },
   {
@@ -51,9 +63,13 @@ export const SIDEBAR_MENUS = [
     label: '생산관리',
     icon: 'Factory',
     children: [
-      { id: 'bom', label: 'BOM 관리', path: '/production/bom', module: 'production' as const },
-      { id: 'work-orders', label: '작업지시서', path: '/production/work-orders', module: 'production' as const },
       { id: 'plans', label: '생산계획(MPS)', path: '/production/plans', module: 'production' as const },
+      { id: 'work-orders', label: '작업지시서', path: '/production/work-orders', module: 'production' as const },
+      { id: 'bom', label: 'BOM 관리', path: '/production/bom', module: 'production' as const },
+      { id: 'weighing', label: '칭량관리(POP)', path: '/production/weighing', module: 'production' as const },
+      { id: 'manufacturing', label: '제조실적', path: '/production/manufacturing', module: 'production' as const },
+      { id: 'packaging', label: '충진/포장', path: '/production/packaging', module: 'production' as const },
+      { id: 'monitor', label: '공정모니터링', path: '/production/monitor', module: 'production' as const },
     ],
   },
   {
@@ -72,20 +88,39 @@ export const SIDEBAR_MENUS = [
     children: [
       { id: 'inspection', label: '품질검사', path: '/quality/inspections', module: 'quality' as const },
       { id: 'capa', label: '부적합/CAPA', path: '/quality/capa', module: 'quality' as const },
+      { id: 'cgmp', label: 'CGMP 문서', path: '/quality/cgmp', module: 'quality' as const },
     ],
   },
   {
     id: 'inventory',
     label: '재고관리',
     icon: 'Package',
-    module: 'inventory' as const,
     children: [
       { id: 'inv-in', label: '입고처리', path: '/inventory/incoming', module: 'inventory' as const },
       { id: 'inv-out', label: '출고처리', path: '/inventory/outgoing', module: 'inventory' as const },
       { id: 'inv-stock', label: '재고현황', path: '/inventory/stock', module: 'inventory' as const },
       { id: 'inv-tx', label: '입출고이력', path: '/inventory/transactions', module: 'inventory' as const },
       { id: 'inv-transfer', label: '창고이동', path: '/inventory/transfer', module: 'inventory' as const },
+      { id: 'inv-ledger', label: '수불부', path: '/inventory/ledger', module: 'inventory' as const },
+      { id: 'inv-count', label: '재고실사', path: '/inventory/count', module: 'inventory' as const },
+      { id: 'inv-safety', label: '안전재고알림', path: '/inventory/safety-stock', module: 'inventory' as const },
       { id: 'inv-lot', label: 'LOT추적', path: '/inventory/lot', module: 'inventory' as const },
+    ],
+  },
+  {
+    id: 'cost',
+    label: '원가관리',
+    icon: 'Calculator',
+    children: [
+      { id: 'cost-calc', label: '원가산출', path: '/cost/calculation', module: 'cost' as const },
+    ],
+  },
+  {
+    id: 'outsourcing',
+    label: '외주관리',
+    icon: 'Truck',
+    children: [
+      { id: 'outsource-order', label: '외주발주/입고', path: '/outsourcing/orders', module: 'outsourcing' as const },
     ],
   },
   {

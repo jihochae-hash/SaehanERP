@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/upload-items.js)",
+      "Bash(node scripts/upload-items.cjs)"
+    ]
+  }
+}
