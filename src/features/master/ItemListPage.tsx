@@ -216,7 +216,7 @@ export default function ItemListPage() {
             {filtered.length}건 중 {page * PAGE_SIZE + 1}~{Math.min((page + 1) * PAGE_SIZE, filtered.length)}
           </span>
         </div>
-        <EditableTable columns={columns} data={displayData} onChange={handleChange} onDelete={isCeo ? handleDelete : undefined} />
+        <EditableTable columns={columns} data={displayData} onChange={handleChange} onDelete={isCeo ? handleDelete : undefined} allData={filtered} exportFileName="품목관리" />
         {/* 페이지네이션 */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t">

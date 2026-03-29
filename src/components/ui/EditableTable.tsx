@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react'
+import { exportToExcel } from '@/utils/exportExcel'
 
 interface EditableColumn<T> {
   key: string
@@ -23,6 +24,9 @@ interface EditableTableProps<T> {
   onChange: (rowIndex: number, key: string, value: unknown) => void
   onDelete?: (rowIndex: number) => void
   emptyMessage?: string
+  /** 전체 데이터 (엑셀 다운로드용, 페이지네이션과 별개) */
+  allData?: T[]
+  exportFileName?: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,6 +36,8 @@ export default function EditableTable<T extends Record<string, any>>({
   keyField = 'id',
   onChange,
   onDelete,
+  allData,
+  exportFileName,
   emptyMessage = '데이터가 없습니다.',
 }: EditableTableProps<T>) {
   const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null)
@@ -138,7 +144,20 @@ export default function EditableTable<T extends Record<string, any>>({
     )
   }
 
+  const handleExport = () => {
+    const exportCols = columns.filter((c) => c.label !== '')
+    const exportData = (allData ?? data) as Record<string, unknown>[]
+    exportToExcel(exportCols, exportData, exportFileName ?? 'export')
+  }
+
   return (
+    <div>
+      <div className="flex justify-end mb-2">
+        <button onClick={handleExport} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          엑셀 다운로드
+        </button>
+      </div>
     <div className="overflow-auto max-h-[70vh]">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e5e7eb]">
@@ -172,6 +191,7 @@ export default function EditableTable<T extends Record<string, any>>({
           )}
         </tbody>
       </table>
+    </div>
     </div>
   )
 }
