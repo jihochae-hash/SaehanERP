@@ -108,6 +108,16 @@ export const SIDEBAR_MENUS = [
     ],
   },
   {
+    id: 'crm',
+    label: 'CRM / A/S',
+    icon: 'Users',
+    children: [
+      { id: 'contact-log', label: '연락/활동기록', path: '/crm/contacts', module: 'crm' as const },
+      { id: 'customer-grade', label: '고객등급관리', path: '/crm/grades', module: 'crm' as const },
+      { id: 'service-request', label: 'A/S 접수/처리', path: '/crm/service', module: 'crm' as const },
+    ],
+  },
+  {
     id: 'cost',
     label: '원가관리',
     icon: 'Calculator',
@@ -121,6 +131,61 @@ export const SIDEBAR_MENUS = [
     icon: 'Truck',
     children: [
       { id: 'outsource-order', label: '외주발주/입고', path: '/outsourcing/orders', module: 'outsourcing' as const },
+    ],
+  },
+  {
+    id: 'accounting',
+    label: '회계/세무',
+    icon: 'BookOpen',
+    children: [
+      { id: 'journal', label: '전표입력', path: '/accounting/journal', module: 'accounting' as const },
+      { id: 'financial', label: '재무제표', path: '/accounting/financial', module: 'accounting' as const },
+      { id: 'tax-invoice', label: '세금계산서', path: '/accounting/tax-invoice', module: 'tax' as const },
+    ],
+  },
+  {
+    id: 'hr',
+    label: '인사/급여',
+    icon: 'UserCircle',
+    children: [
+      { id: 'employees', label: '사원정보', path: '/hr/employees', module: 'hr' as const },
+      { id: 'attendance', label: '근태관리', path: '/hr/attendance', module: 'hr' as const },
+      { id: 'payroll', label: '급여관리', path: '/hr/payroll', module: 'payroll' as const },
+    ],
+  },
+  {
+    id: 'equipment',
+    label: '설비관리',
+    icon: 'Wrench',
+    children: [
+      { id: 'equip-list', label: '설비대장', path: '/equipment/list', module: 'equipment' as const },
+      { id: 'maintenance', label: '정비/고장이력', path: '/equipment/maintenance', module: 'equipment' as const },
+    ],
+  },
+  {
+    id: 'approval',
+    label: '전자결재',
+    icon: 'FileCheck',
+    children: [
+      { id: 'approval-req', label: '결재요청/처리', path: '/approval/requests', module: 'approval' as const },
+    ],
+  },
+  {
+    id: 'contract',
+    label: '전자계약',
+    icon: 'FileSignature',
+    children: [
+      { id: 'contract-list', label: '계약관리', path: '/contract/list', module: 'contract' as const },
+    ],
+  },
+  {
+    id: 'groupware',
+    label: '그룹웨어',
+    icon: 'MessageSquare',
+    children: [
+      { id: 'notice', label: '게시판', path: '/groupware/notice', module: 'groupware' as const },
+      { id: 'schedule', label: '일정관리', path: '/groupware/schedule', module: null },
+      { id: 'fileshare', label: '파일공유', path: '/groupware/files', module: 'groupware' as const },
     ],
   },
   {

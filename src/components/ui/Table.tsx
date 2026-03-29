@@ -70,9 +70,9 @@ export default function Table<T extends Record<string, any>>({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-auto max-h-[70vh]">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e5e7eb]">
           <tr>
             {columns.map((col) => {
               // label이 비어있으면 (액션 컬럼) 정렬 비활성

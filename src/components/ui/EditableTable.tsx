@@ -139,9 +139,9 @@ export default function EditableTable<T extends Record<string, any>>({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-auto max-h-[70vh]">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e5e7eb]">
           <tr>
             {columns.map((col) => (
               <th key={col.key} style={col.width ? { width: col.width } : undefined} className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
