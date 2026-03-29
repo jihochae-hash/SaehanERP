@@ -23,7 +23,13 @@ export default function PartnerListPage() {
   const existingCodes = partners.map((p) => p.code)
 
   const filtered = partners.filter(
-    (p) => p.name.includes(search) || p.code.includes(search) || (p.businessNo?.includes(search) ?? false),
+    (p) =>
+      p.name.includes(search) ||
+      p.code.includes(search) ||
+      (p.abbr?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+      (p.businessNo?.includes(search) ?? false) ||
+      (p.contactPerson?.includes(search) ?? false) ||
+      (p.internalManager?.includes(search) ?? false),
   )
 
   const handleChange = useCallback(async (rowIndex: number, key: string, value: unknown) => {
@@ -31,24 +37,22 @@ export default function PartnerListPage() {
     if (!partner) return
 
     if (key === 'code') {
-      const newCode = String(value).toUpperCase()
-      if (existingCodes.some((c) => c.toUpperCase() === newCode && c.toUpperCase() !== partner.code.toUpperCase())) {
+      const newCode = String(value)
+      if (existingCodes.some((c) => c === newCode && c !== partner.code)) {
         alert('이미 사용중인 거래처코드입니다.')
         return
       }
-      value = newCode
     }
 
     await updateMutation.mutateAsync({ docId: partner.id, data: { [key]: value } })
   }, [filtered, existingCodes, updateMutation])
 
   const handleAdd = async () => {
-    // 순차 코드 생성
     const maxNum = partners.reduce((max, p) => {
       const num = parseInt(p.code.replace(/\D/g, ''), 10)
       return isNaN(num) ? max : Math.max(max, num)
     }, 0)
-    const code = `P${String(maxNum + 1).padStart(4, '0')}`
+    const code = String(maxNum + 1).padStart(6, '0')
     await createMutation.mutateAsync({ code, name: '', type: 'supplier' as PartnerType, isActive: true })
   }
 
@@ -61,17 +65,27 @@ export default function PartnerListPage() {
   }
 
   const columns = [
-    { key: 'code', label: '거래처코드', width: '110px' },
-    { key: 'name', label: '거래처명' },
-    { key: 'type', label: '유형', width: '100px', type: 'select' as const, options: PARTNER_TYPE_OPTIONS },
+    { key: 'code', label: '코드', width: '80px' },
+    { key: 'name', label: '상호' },
+    { key: 'abbr', label: '약칭', width: '70px' },
+    { key: 'type', label: '유형', width: '90px', type: 'select' as const, options: PARTNER_TYPE_OPTIONS },
     { key: 'businessNo', label: '사업자번호', width: '130px' },
-    { key: 'representative', label: '대표자', width: '90px' },
+    { key: 'representative', label: '대표자', width: '80px' },
+    { key: 'roadAddress', label: '도로명주소' },
+    { key: 'businessType', label: '업태', width: '100px' },
+    { key: 'businessItem', label: '종목', width: '100px' },
     { key: 'phone', label: '전화번호', width: '130px' },
-    { key: 'email', label: '이메일', width: '160px' },
-    { key: 'contactPerson', label: '담당자', width: '90px' },
-    { key: 'contactPhone', label: '담당자연락처', width: '130px' },
-    { key: 'address', label: '주소' },
-    { key: 'isActive', label: '활성', width: '60px', type: 'checkbox' as const },
+    { key: 'contactPerson', label: '담당자', width: '80px' },
+    { key: 'contactEmail', label: '담당자이메일', width: '160px' },
+    { key: 'contactPhone', label: '담당자HP', width: '130px' },
+    { key: 'bankName', label: '은행', width: '80px' },
+    { key: 'bankAccount', label: '계좌번호', width: '140px' },
+    { key: 'partnerGroup', label: '그룹', width: '80px' },
+    { key: 'internalManager', label: '자사담당', width: '80px' },
+    { key: 'isSales', label: '매출', width: '50px', type: 'checkbox' as const },
+    { key: 'isPurchase', label: '매입', width: '50px', type: 'checkbox' as const },
+    { key: 'notes', label: '비고', width: '120px' },
+    { key: 'isActive', label: '활성', width: '50px', type: 'checkbox' as const },
   ]
 
   return (
@@ -83,8 +97,8 @@ export default function PartnerListPage() {
 
       <Card>
         <div className="mb-3 flex items-center justify-between">
-          <Input placeholder="거래처코드, 거래처명, 사업자번호 검색..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
-          <p className="text-xs text-gray-400">셀을 클릭하여 직접 편집 · Tab/Enter로 이동</p>
+          <Input placeholder="코드, 상호, 약칭, 사업자번호, 담당자, 자사담당 검색..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-md" />
+          <p className="text-xs text-gray-400">셀 클릭 편집 · Tab/Enter 이동 · 총 {partners.length}건</p>
         </div>
         <EditableTable
           columns={columns}
@@ -92,8 +106,8 @@ export default function PartnerListPage() {
           onChange={handleChange}
           onDelete={isCeo ? handleDelete : undefined}
         />
-        {!isLoading && filtered.length > 0 && (
-          <div className="mt-3 text-sm text-gray-500 text-right">총 {filtered.length}건</div>
+        {!isLoading && filtered.length > 0 && filtered.length !== partners.length && (
+          <div className="mt-3 text-sm text-gray-500 text-right">검색결과 {filtered.length}건 / 전체 {partners.length}건</div>
         )}
       </Card>
     </div>

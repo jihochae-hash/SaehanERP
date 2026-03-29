@@ -62,17 +62,38 @@ export type PartnerType = 'supplier' | 'customer' | 'both'
 export interface Partner extends BaseDocument {
   code: string
   name: string
+  /** 약칭 */
+  abbr?: string
   type: PartnerType
+  /** 사업자등록번호 */
   businessNo?: string
   representative?: string
   address?: string
+  /** 도로명주소 */
+  roadAddress?: string
+  /** 업태 */
+  businessType?: string
+  /** 종목 */
+  businessItem?: string
   phone?: string
   fax?: string
   email?: string
   contactPerson?: string
   contactPhone?: string
+  /** 담당자 이메일 */
+  contactEmail?: string
   bankName?: string
   bankAccount?: string
+  /** 거래처그룹 */
+  partnerGroup?: string
+  /** 결제조건 */
+  paymentTerms?: string
+  /** 자사담당자 */
+  internalManager?: string
+  /** 매출 거래처 여부 */
+  isSales?: boolean
+  /** 매입 거래처 여부 */
+  isPurchase?: boolean
   notes?: string
   isActive: boolean
 }
