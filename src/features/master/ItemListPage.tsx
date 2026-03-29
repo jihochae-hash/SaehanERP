@@ -138,18 +138,27 @@ export default function ItemListPage() {
   /** 변경사항 취소 */
   const handleCancel = () => setPendingChanges(new Map())
 
+  const defaultNewRow = (): NewItemRow => ({
+    id: crypto.randomUUID(),
+    type: 'raw_material',
+    customerAbbr: '',
+    name: '',
+    unit: 'kg',
+    specification: '',
+    procurementType: 'purchase',
+    requiresLotTracking: true,
+  })
+
   /** 모달에 빈 행 추가 */
   const addNewRow = () => {
-    setNewRows((prev) => [...prev, {
-      id: crypto.randomUUID(),
-      type: 'raw_material',
-      customerAbbr: '',
-      name: '',
-      unit: 'kg',
-      specification: '',
-      procurementType: 'purchase',
-      requiresLotTracking: true,
-    }])
+    setNewRows((prev) => [...prev, defaultNewRow()])
+  }
+
+  /** 첫 줄 복사해서 행 추가 */
+  const duplicateFirstRow = () => {
+    if (newRows.length === 0) { addNewRow(); return }
+    const first = newRows[0]
+    setNewRows((prev) => [...prev, { ...first, id: crypto.randomUUID(), name: '' }])
   }
 
   /** 모달 행 값 변경 */
@@ -162,7 +171,7 @@ export default function ItemListPage() {
     setNewRows((prev) => prev.filter((r) => r.id !== id))
   }
 
-  /** 모달: 일괄 저장 */
+  /** 모달: 일괄 저장 (Firestore 전체 코드 조회 후 중복 방지) */
   const handleBulkAdd = async () => {
     const validRows = newRows.filter((r) => r.customerAbbr.length === 3 && r.name.trim())
     if (validRows.length === 0) {
@@ -171,9 +180,17 @@ export default function ItemListPage() {
     }
     setAddSaving(true)
     try {
-      let codes = [...existingCodes]
+      // Firestore에서 전체 품목코드 조회 (중복 방지)
+      const allItems = await getAllDocuments<Item>('items', [fsOrderBy('code', 'asc')])
+      let codes = allItems.map((i) => i.code)
+
       for (const row of validRows) {
         const code = generateNextCode(codes, row.type, row.customerAbbr)
+        // 최종 중복 체크
+        if (codes.includes(code)) {
+          alert(`코드 중복 발생: ${code} — 저장을 중단합니다.`)
+          return
+        }
         codes.push(code)
         await createMutation.mutateAsync({
           code, name: row.name, type: row.type, unit: row.unit,
@@ -236,7 +253,7 @@ export default function ItemListPage() {
             </>
           )}
           {!hasChanges && (
-            <Button onClick={() => { setNewRows([{ id: crypto.randomUUID(), type: 'raw_material', customerAbbr: '', name: '', unit: 'kg', specification: '', procurementType: 'purchase', requiresLotTracking: true }]); setAddModalOpen(true) }}>
+            <Button onClick={() => { setNewRows([defaultNewRow()]); setAddModalOpen(true) }}>
               품목 추가
             </Button>
           )}
@@ -343,7 +360,10 @@ export default function ItemListPage() {
             </table>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={addNewRow}>+ 행 추가</Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={addNewRow}>+ 빈 행 추가</Button>
+            <Button variant="ghost" size="sm" onClick={duplicateFirstRow}>+ 첫 줄 복사 추가</Button>
+          </div>
 
           <div className="flex justify-between items-center pt-4 border-t">
             <span className="text-sm text-gray-500">{newRows.filter((r) => r.customerAbbr.length === 3 && r.name.trim()).length}건 저장 가능</span>
