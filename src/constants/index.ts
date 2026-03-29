@@ -38,6 +38,25 @@ export const SIDEBAR_MENUS = [
     ],
   },
   {
+    id: 'rnd',
+    label: 'R&D / 처방',
+    icon: 'Flask',
+    children: [
+      { id: 'ingredients', label: '원료 마스터', path: '/rnd/ingredients', module: 'rnd' as const },
+      { id: 'formulas', label: '처방 관리', path: '/rnd/formulas', module: 'rnd' as const },
+    ],
+  },
+  {
+    id: 'production',
+    label: '생산관리',
+    icon: 'Factory',
+    children: [
+      { id: 'bom', label: 'BOM 관리', path: '/production/bom', module: 'production' as const },
+      { id: 'work-orders', label: '작업지시서', path: '/production/work-orders', module: 'production' as const },
+      { id: 'plans', label: '생산계획(MPS)', path: '/production/plans', module: 'production' as const },
+    ],
+  },
+  {
     id: 'inventory',
     label: '재고관리',
     icon: 'Package',

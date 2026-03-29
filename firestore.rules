@@ -66,11 +66,47 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ===== 처방 (R&D 전용 + 암호화) =====
+    // ===== R&D / 처방관리 =====
+    match /ingredients/{id} {
+      allow read: if isAuth();
+      allow create, update: if isAuth() && hasModule('rnd') && isLevel(2);
+      allow delete: if isCeo();
+    }
     match /formulas/{id} {
       allow read: if isAuth() && hasModule('rnd');
       allow create, update: if isAuth() && hasModule('rnd') && isLevel(2);
       allow delete: if false;
+    }
+    match /formulaVerifications/{id} {
+      allow read: if isAuth() && hasModule('rnd');
+      allow write: if false;
+    }
+    match /productStandards/{id} {
+      allow read: if isAuth() && hasModule('rnd');
+      allow create, update: if isAuth() && hasModule('rnd') && isLevel(2);
+      allow delete: if false;
+    }
+
+    // ===== 생산관리 =====
+    match /boms/{id} {
+      allow read: if isAuth() && (hasModule('production') || hasModule('rnd'));
+      allow create, update: if isAuth() && hasModule('production') && isLevel(2);
+      allow delete: if isCeo();
+    }
+    match /workOrders/{id} {
+      allow read: if isAuth() && hasModule('production');
+      allow create, update: if isAuth() && hasModule('production') && isLevel(2);
+      allow delete: if isCeo();
+    }
+    match /productionRecords/{id} {
+      allow read: if isAuth() && hasModule('production');
+      allow create, update: if isAuth() && hasModule('production') && isLevel(2);
+      allow delete: if false;
+    }
+    match /productionPlans/{id} {
+      allow read: if isAuth() && hasModule('production');
+      allow create, update: if isAuth() && hasModule('production') && isLevel(2);
+      allow delete: if isCeo();
     }
 
     // ===== 급여 (경리 + 본인만) =====

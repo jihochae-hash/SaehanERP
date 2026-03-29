@@ -15,6 +15,12 @@ import IncomingPage from '@/features/inventory/IncomingPage'
 import OutgoingPage from '@/features/inventory/OutgoingPage'
 import TransactionListPage from '@/features/inventory/TransactionListPage'
 import LotTrackingPage from '@/features/inventory/LotTrackingPage'
+import IngredientListPage from '@/features/rnd/IngredientListPage'
+import FormulaListPage from '@/features/rnd/FormulaListPage'
+import FormulaDetailPage from '@/features/rnd/FormulaDetailPage'
+import BomListPage from '@/features/production/BomListPage'
+import WorkOrderListPage from '@/features/production/WorkOrderListPage'
+import ProductionPlanPage from '@/features/production/ProductionPlanPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +59,16 @@ function App() {
               <Route path="/master/items" element={<RoleGuard module="inventory"><ItemListPage /></RoleGuard>} />
               <Route path="/master/partners" element={<PartnerListPage />} />
               <Route path="/master/warehouses" element={<RoleGuard module="inventory"><WarehouseListPage /></RoleGuard>} />
+
+              {/* R&D / 처방관리 */}
+              <Route path="/rnd/ingredients" element={<RoleGuard module="rnd"><IngredientListPage /></RoleGuard>} />
+              <Route path="/rnd/formulas" element={<RoleGuard module="rnd"><FormulaListPage /></RoleGuard>} />
+              <Route path="/rnd/formulas/:id" element={<RoleGuard module="rnd"><FormulaDetailPage /></RoleGuard>} />
+
+              {/* 생산관리 */}
+              <Route path="/production/bom" element={<RoleGuard module="production"><BomListPage /></RoleGuard>} />
+              <Route path="/production/work-orders" element={<RoleGuard module="production"><WorkOrderListPage /></RoleGuard>} />
+              <Route path="/production/plans" element={<RoleGuard module="production"><ProductionPlanPage /></RoleGuard>} />
 
               {/* 재고관리 */}
               <Route path="/inventory/incoming" element={<RoleGuard module="inventory"><IncomingPage /></RoleGuard>} />
