@@ -15,27 +15,36 @@ const PAGE_SIZE = 50
 
 export default function PartnerListPage() {
   const [search, setSearch] = useState('')
+  const [activeSearch, setActiveSearch] = useState('')
   const [page, setPage] = useState(0)
   const [pendingChanges, setPendingChanges] = useState<Map<string, Record<string, unknown>>>(new Map())
   const [saving, setSaving] = useState(false)
   const isCeo = useAuthStore((s) => s.isCeo())
 
-  const { data: partners = [] } = useCollection<Partner>('partners', [orderBy('code', 'asc')], ['all'])
+  const maxDocs = activeSearch ? 0 : 200
+  const { data: partners = [] } = useCollection<Partner>('partners', [orderBy('code', 'asc')], ['all', activeSearch], maxDocs)
   const createMutation = useCreateDocument('partners')
   const updateMutation = useUpdateDocument('partners')
   const deleteMutation = useDeleteDocument('partners')
 
   const existingCodes = partners.map((p) => p.code)
 
-  const filtered = partners.filter(
-    (p) =>
-      p.name.includes(search) ||
-      p.code.includes(search) ||
-      (p.abbr?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-      (p.businessNo?.includes(search) ?? false) ||
-      (p.contactPerson?.includes(search) ?? false) ||
-      (p.internalManager?.includes(search) ?? false),
-  )
+  const handleSearch = () => {
+    setActiveSearch(search.trim())
+    setPage(0)
+  }
+
+  const filtered = activeSearch
+    ? partners.filter(
+        (p) =>
+          p.name.includes(activeSearch) ||
+          p.code.includes(activeSearch) ||
+          (p.abbr?.toLowerCase().includes(activeSearch.toLowerCase()) ?? false) ||
+          (p.businessNo?.includes(activeSearch) ?? false) ||
+          (p.contactPerson?.includes(activeSearch) ?? false) ||
+          (p.internalManager?.includes(activeSearch) ?? false),
+      )
+    : partners
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -137,7 +146,16 @@ export default function PartnerListPage() {
 
       <Card>
         <div className="mb-3 flex items-center justify-between">
-          <Input placeholder="코드, 상호, 약칭, 사업자번호, 담당자 검색..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="max-w-md" />
+          <div className="flex gap-2 flex-1 max-w-md">
+            <Input
+              placeholder="코드, 상호, 약칭, 사업자번호, 담당자 검색 (Enter)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <Button size="sm" onClick={handleSearch}>검색</Button>
+            {activeSearch && <Button size="sm" variant="ghost" onClick={() => { setSearch(''); setActiveSearch(''); setPage(0) }}>초기화</Button>}
+          </div>
           <span className="text-xs text-gray-500">
             {filtered.length}건 중 {page * PAGE_SIZE + 1}~{Math.min((page + 1) * PAGE_SIZE, filtered.length)}
           </span>

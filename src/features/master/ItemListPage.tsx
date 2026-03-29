@@ -27,29 +27,38 @@ const PAGE_SIZE = 50
 
 export default function ItemListPage() {
   const [search, setSearch] = useState('')
+  const [activeSearch, setActiveSearch] = useState('')
   const [newItemAbr, setNewItemAbr] = useState('')
   const [newItemType, setNewItemType] = useState<ItemType>('raw_material')
   const [page, setPage] = useState(0)
-  // 변경사항 버퍼: docId → { field → value }
   const [pendingChanges, setPendingChanges] = useState<Map<string, Record<string, unknown>>>(new Map())
   const [saving, setSaving] = useState(false)
   const isCeo = useAuthStore((s) => s.isCeo())
 
-  const { data: items = [] } = useCollection<Item>('items', [orderBy('code', 'asc')], ['all'])
+  // 검색어가 있으면 전체 로드, 없으면 200건만
+  const maxDocs = activeSearch ? 0 : 200
+  const { data: items = [] } = useCollection<Item>('items', [orderBy('code', 'asc')], ['all', activeSearch], maxDocs)
   const createMutation = useCreateDocument('items')
   const updateMutation = useUpdateDocument('items')
   const deleteMutation = useDeleteDocument('items')
 
   const existingCodes = items.map((i) => i.code)
 
-  // 검색 필터
-  const filtered = items.filter(
-    (item) =>
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.code.toLowerCase().includes(search.toLowerCase()) ||
-      (item.customerAbbr?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-      (item.customerName?.toLowerCase().includes(search.toLowerCase()) ?? false),
-  )
+  const handleSearch = () => {
+    setActiveSearch(search.trim())
+    setPage(0)
+  }
+
+  // 검색 필터 (검색어가 있을 때만 필터링)
+  const filtered = activeSearch
+    ? items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(activeSearch.toLowerCase()) ||
+          item.code.toLowerCase().includes(activeSearch.toLowerCase()) ||
+          (item.customerAbbr?.toLowerCase().includes(activeSearch.toLowerCase()) ?? false) ||
+          (item.customerName?.toLowerCase().includes(activeSearch.toLowerCase()) ?? false),
+      )
+    : items
 
   // 페이지네이션
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
@@ -193,7 +202,16 @@ export default function ItemListPage() {
       {/* 테이블 */}
       <Card>
         <div className="mb-3 flex items-center justify-between">
-          <Input placeholder="품목코드, 품목명, 고객약칭, 고객사명 검색..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="max-w-sm" />
+          <div className="flex gap-2 flex-1 max-w-md">
+            <Input
+              placeholder="품목코드, 품목명, 고객약칭 검색 (Enter)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <Button size="sm" onClick={handleSearch}>검색</Button>
+            {activeSearch && <Button size="sm" variant="ghost" onClick={() => { setSearch(''); setActiveSearch(''); setPage(0) }}>초기화</Button>}
+          </div>
           <span className="text-xs text-gray-500">
             {filtered.length}건 중 {page * PAGE_SIZE + 1}~{Math.min((page + 1) * PAGE_SIZE, filtered.length)}
           </span>
