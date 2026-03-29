@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(node scripts/upload-items.js)",
-      "Bash(node scripts/upload-items.cjs)"
+      "Bash(node scripts/upload-items.cjs)",
+      "Read(//c/Users/gioho/Desktop/Saehan-ERP/**)"
     ]
   }
 }

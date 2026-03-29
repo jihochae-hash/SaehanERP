@@ -1,166 +1,100 @@
-import { orderBy, where } from 'firebase/firestore'
+import { orderBy } from 'firebase/firestore'
 import { Card, Badge } from '@/components/ui'
 import { useCollection } from '@/hooks/useFirestore'
 import { formatNumber } from '@/utils/format'
-import type { WorkOrder } from '@/types'
-import type { BaseDocument } from '@/types'
 
-/** 공정 단계 */
-type ProductionStage = 'weighing' | 'manufacturing' | 'packaging'
+interface WorkOrder { id: string; orderNo: string; productItemName: string; plannedQuantity: number; actualQuantity?: number; unit: string; status: string; productionLine?: string; plannedStartDate?: string; plannedEndDate?: string }
+interface ProductionRecord { id: string; workOrderNo?: string; stage: string; status: string }
+interface QualityInspection { id: string; referenceNo?: string; overallResult?: string }
 
-const STAGE_LABEL: Record<ProductionStage, string> = {
-  weighing: '칭량',
-  manufacturing: '제조',
-  packaging: '충진/포장',
-}
-
-const STAGE_ORDER: ProductionStage[] = ['weighing', 'manufacturing', 'packaging']
-
-/** 생산기록 (공정 모니터링용 최소 타입) */
-interface ProductionRecord extends BaseDocument {
-  stage: ProductionStage
-  workOrderNo: string
-  status: string
-}
-
-/** 작업지시별 공정 진행 현황 계산 */
-function calculateProgress(workOrderNo: string, records: ProductionRecord[]) {
-  const related = records.filter((r) => r.workOrderNo === workOrderNo)
-  const completedStages = new Set<ProductionStage>()
-  let currentStage: ProductionStage | null = null
-
-  for (const stage of STAGE_ORDER) {
-    const stageRecords = related.filter((r) => r.stage === stage)
-    if (stageRecords.length === 0) {
-      if (!currentStage) currentStage = stage
-      continue
-    }
-    const allCompleted = stageRecords.every((r) => r.status === 'completed')
-    if (allCompleted) {
-      completedStages.add(stage)
-    } else {
-      currentStage = stage
-    }
-  }
-
-  const completedCount = completedStages.size
-  const percentage = Math.round((completedCount / STAGE_ORDER.length) * 100)
-
-  return { completedStages, currentStage, percentage }
-}
+const STAGES = [
+  { key: 'planned', label: '계획', color: 'gray' },
+  { key: 'weighing', label: '칭량', color: 'blue' },
+  { key: 'manufacturing', label: '제조', color: 'purple' },
+  { key: 'packaging', label: '충진/포장', color: 'yellow' },
+  { key: 'inspection', label: '품질검사', color: 'blue' },
+  { key: 'completed', label: '완료', color: 'green' },
+] as const
 
 export default function ProductionMonitorPage() {
-  // 진행중 작업지시만 조회
-  const { data: workOrders = [], isLoading: woLoading } = useCollection<WorkOrder>(
-    'workOrders',
-    [where('status', 'in', ['planned', 'in_progress']), orderBy('createdAt', 'desc')],
-    ['active'],
-  )
+  const { data: workOrders = [] } = useCollection<WorkOrder>('workOrders', [orderBy('createdAt', 'desc')], ['monitor-wo'])
+  const { data: prodRecords = [] } = useCollection<ProductionRecord>('productionRecords', [orderBy('createdAt', 'desc')], ['monitor-pr'])
+  const { data: inspections = [] } = useCollection<QualityInspection>('qualityInspections', [orderBy('createdAt', 'desc')], ['monitor-qi'])
 
-  // 모든 생산기록 조회
-  const { data: records = [], isLoading: recLoading } = useCollection<ProductionRecord>(
-    'productionRecords',
-    [orderBy('createdAt', 'desc')],
-    ['all'],
-  )
+  const activeOrders = workOrders.filter((wo) => wo.status !== 'cancelled')
 
-  const isLoading = woLoading || recLoading
+  const getStage = (wo: WorkOrder): string => {
+    if (wo.status === 'completed') return 'completed'
+    const records = prodRecords.filter((r) => r.workOrderNo === wo.orderNo)
+    const hasInspection = inspections.some((i) => i.referenceNo === wo.orderNo)
+    if (hasInspection) return 'inspection'
+    if (records.some((r) => r.stage === 'packaging')) return 'packaging'
+    if (records.some((r) => r.stage === 'manufacturing')) return 'manufacturing'
+    if (records.some((r) => r.stage === 'weighing')) return 'weighing'
+    return 'planned'
+  }
+
+  const getProgress = (stage: string): number => {
+    const idx = STAGES.findIndex((s) => s.key === stage)
+    return Math.round(((idx + 1) / STAGES.length) * 100)
+  }
+
+  const stageCounts: Record<string, number> = {}
+  STAGES.forEach((s) => { stageCounts[s.key] = 0 })
+  activeOrders.forEach((wo) => { const s = getStage(wo); stageCounts[s] = (stageCounts[s] ?? 0) + 1 })
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">공정모니터링</h1>
-        <Badge color="blue">실시간</Badge>
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">공정 모니터링</h1>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {STAGES.map((stage) => (
+          <div key={stage.key} className="bg-white rounded-xl border p-4 text-center">
+            <p className="text-xs text-gray-500 mb-1">{stage.label}</p>
+            <p className="text-3xl font-bold text-gray-900">{stageCounts[stage.key]}</p>
+            <Badge color={stage.color as 'gray' | 'blue' | 'purple' | 'yellow' | 'green'}>{stage.label}</Badge>
+          </div>
+        ))}
       </div>
 
-      {isLoading && (
-        <div className="text-center py-12 text-gray-500">데이터를 불러오는 중...</div>
-      )}
-
-      {!isLoading && workOrders.length === 0 && (
-        <Card>
-          <div className="text-center py-12 text-gray-500">진행중인 작업지시가 없습니다.</div>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {workOrders.map((wo) => {
-          const { completedStages, currentStage, percentage } = calculateProgress(wo.orderNo, records)
-
+      <div className="space-y-3">
+        {activeOrders.slice(0, 20).map((wo) => {
+          const stage = getStage(wo)
+          const progress = getProgress(stage)
+          const stageInfo = STAGES.find((s) => s.key === stage)
           return (
             <Card key={wo.id}>
-              <div className="space-y-3">
-                {/* 헤더 */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{wo.productItemName}</h3>
-                    <p className="text-sm text-gray-500">{wo.orderNo}</p>
-                  </div>
-                  <Badge color={wo.status === 'in_progress' ? 'blue' : 'gray'}>
-                    {wo.status === 'in_progress' ? '진행중' : '계획'}
-                  </Badge>
-                </div>
-
-                {/* 수량 정보 */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">계획수량</span>
-                  <span className="font-medium">{formatNumber(wo.plannedQuantity)} {wo.unit}</span>
-                </div>
-                {wo.actualQuantity != null && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">실적수량</span>
-                    <span className="font-medium">{formatNumber(wo.actualQuantity)} {wo.unit}</span>
-                  </div>
-                )}
-
-                {/* 일정 */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">계획기간</span>
-                  <span className="text-gray-700">{wo.plannedStartDate} ~ {wo.plannedEndDate}</span>
-                </div>
-
-                {/* 생산라인 */}
-                {wo.productionLine && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">생산라인</span>
-                    <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{wo.productionLine}</span>
-                  </div>
-                )}
-
-                {/* 진행률 바 */}
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-600">공정 진행률</span>
-                    <span className="font-semibold text-blue-600">{percentage}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
+                  <span className="font-semibold text-gray-900">{wo.orderNo}</span>
+                  <span className="text-gray-500 ml-2">{wo.productItemName}</span>
+                  {wo.productionLine && <span className="text-xs text-gray-400 ml-2">({wo.productionLine})</span>}
                 </div>
-
-                {/* 공정 단계 표시 */}
-                <div className="flex gap-2">
-                  {STAGE_ORDER.map((stage) => {
-                    const isCompleted = completedStages.has(stage)
-                    const isCurrent = currentStage === stage
-                    let color: 'green' | 'blue' | 'gray' = 'gray'
-                    if (isCompleted) color = 'green'
-                    else if (isCurrent) color = 'blue'
-
-                    return (
-                      <Badge key={stage} color={color}>
-                        {STAGE_LABEL[stage]}
-                      </Badge>
-                    )
-                  })}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">{formatNumber(wo.plannedQuantity)} {wo.unit}</span>
+                  <Badge color={stageInfo?.color as 'gray' | 'blue' | 'green'}>{stageInfo?.label ?? stage}</Badge>
                 </div>
               </div>
+              <div className="flex items-center gap-1">
+                {STAGES.map((s, i) => {
+                  const stageIdx = STAGES.findIndex((st) => st.key === stage)
+                  const isActive = i <= stageIdx
+                  const isCurrent = i === stageIdx
+                  return (
+                    <div key={s.key} className="flex-1">
+                      <div className={`h-2 rounded-full ${isActive ? (isCurrent ? 'bg-teal-500 animate-pulse' : 'bg-teal-400') : 'bg-gray-200'}`} />
+                      <p className={`text-[10px] mt-1 text-center ${isCurrent ? 'text-teal-700 font-semibold' : isActive ? 'text-teal-500' : 'text-gray-400'}`}>{s.label}</p>
+                    </div>
+                  )
+                })}
+              </div>
+              {wo.plannedStartDate && (
+                <p className="text-xs text-gray-400 mt-2">일정: {wo.plannedStartDate} ~ {wo.plannedEndDate ?? '미정'}<span className="ml-2 text-teal-600 font-medium">{progress}%</span></p>
+              )}
             </Card>
           )
         })}
+        {activeOrders.length === 0 && <Card><p className="text-sm text-gray-500 text-center py-8">진행중인 작업지시가 없습니다.</p></Card>}
       </div>
     </div>
   )
