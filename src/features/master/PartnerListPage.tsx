@@ -43,7 +43,7 @@ export default function PartnerListPage() {
   const queryClient = useQueryClient()
 
   const maxDocs = activeSearch ? 0 : 200
-  const { data: partners = [] } = useCollection<Partner>('partners', [orderBy('code', 'asc')], ['all', activeSearch], maxDocs)
+  const { data: partners = [] } = useCollection<Partner>('partners', [orderBy('createdAt', 'desc')], ['all', activeSearch], maxDocs)
   const updateMutation = useUpdateDocument('partners')
   const deleteMutation = useDeleteDocument('partners')
 

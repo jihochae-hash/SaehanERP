@@ -1,5 +1,6 @@
-import { useState, useMemo, type ReactNode } from 'react'
+import { useState, useMemo, useCallback, useRef, type ReactNode } from 'react'
 import { exportToExcel } from '@/utils/exportExcel'
+import { useColumnWidths } from '@/hooks/useColumnWidths'
 
 interface Column<T> {
   key: string
@@ -16,10 +17,10 @@ interface TableProps<T> {
   emptyMessage?: string
   loading?: boolean
   onRowClick?: (row: T) => void
-  /** 엑셀 다운로드 파일명 (false로 설정하면 숨김) */
   exportFileName?: string | false
-  /** 전체 데이터 가져오기 (엑셀 다운로드 시 전체 데이터 로드) */
   onFetchAllForExport?: () => Promise<T[]>
+  /** 열 너비 저장용 테이블 고유 ID (미지정 시 자동 생성) */
+  tableId?: string
 }
 
 type SortDirection = 'asc' | 'desc'
@@ -34,35 +35,74 @@ export default function Table<T extends Record<string, any>>({
   onRowClick,
   exportFileName,
   onFetchAllForExport,
+  tableId,
 }: TableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<SortDirection>('asc')
+  const [exporting, setExporting] = useState(false)
+
+  // 컬럼 기본 너비
+  const defaultWidths = useMemo(() => {
+    const w: Record<string, number> = {}
+    columns.forEach((col) => {
+      w[col.key] = parseInt(col.width ?? '120', 10) || 120
+    })
+    return w
+  }, [columns])
+
+  const autoTableId = tableId ?? columns.map((c) => c.key).join('_')
+  const { widths, updateWidth } = useColumnWidths(autoTableId, defaultWidths)
+
+  // 드래그 리사이즈
+  const dragRef = useRef<{ key: string; startX: number; startW: number } | null>(null)
+
+  const onMouseDown = useCallback((e: React.MouseEvent, key: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragRef.current = { key, startX: e.clientX, startW: widths[key] ?? 120 }
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return
+      const diff = ev.clientX - dragRef.current.startX
+      updateWidth(dragRef.current.key, dragRef.current.startW + diff)
+    }
+    const onMouseUp = () => {
+      dragRef.current = null
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+  }, [widths, updateWidth])
 
   const handleSort = (key: string) => {
-    if (sortKey === key) {
-      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      setSortDir('asc')
-    }
+    if (sortKey === key) setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    else { setSortKey(key); setSortDir('asc') }
   }
 
   const sortedData = useMemo(() => {
     if (!sortKey) return data
     return [...data].sort((a, b) => {
-      const aVal = a[sortKey]
-      const bVal = b[sortKey]
+      const aVal = a[sortKey]; const bVal = b[sortKey]
       if (aVal == null && bVal == null) return 0
       if (aVal == null) return sortDir === 'asc' ? 1 : -1
       if (bVal == null) return sortDir === 'asc' ? -1 : 1
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDir === 'asc' ? aVal - bVal : bVal - aVal
-      }
-      const aStr = String(aVal)
-      const bStr = String(bVal)
-      return sortDir === 'asc' ? aStr.localeCompare(bStr, 'ko') : bStr.localeCompare(aStr, 'ko')
+      if (typeof aVal === 'number' && typeof bVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal
+      return sortDir === 'asc' ? String(aVal).localeCompare(String(bVal), 'ko') : String(bVal).localeCompare(String(aVal), 'ko')
     })
   }, [data, sortKey, sortDir])
+
+  const handleExport = async () => {
+    const exportCols = columns.filter((c) => c.label !== '')
+    const name = (typeof exportFileName === 'string' ? exportFileName : undefined) ?? 'export'
+    if (onFetchAllForExport) {
+      setExporting(true)
+      try { exportToExcel(exportCols, await onFetchAllForExport() as Record<string, unknown>[], name) }
+      finally { setExporting(false) }
+    } else {
+      exportToExcel(exportCols, sortedData as Record<string, unknown>[], name)
+    }
+  }
 
   if (loading) {
     return (
@@ -76,23 +116,6 @@ export default function Table<T extends Record<string, any>>({
     )
   }
 
-  const [exporting, setExporting] = useState(false)
-  const handleExport = async () => {
-    const exportCols = columns.filter((c) => c.label !== '')
-    const name = (typeof exportFileName === 'string' ? exportFileName : undefined) ?? 'export'
-    if (onFetchAllForExport) {
-      setExporting(true)
-      try {
-        const allData = await onFetchAllForExport()
-        exportToExcel(exportCols, allData as Record<string, unknown>[], name)
-      } finally {
-        setExporting(false)
-      }
-    } else {
-      exportToExcel(exportCols, sortedData as Record<string, unknown>[], name)
-    }
-  }
-
   return (
     <div>
       {exportFileName !== false && (
@@ -103,63 +126,59 @@ export default function Table<T extends Record<string, any>>({
           </button>
         </div>
       )}
-    <div className="overflow-auto max-h-[70vh]">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e5e7eb]">
-          <tr>
-            {columns.map((col) => {
-              // label이 비어있으면 (액션 컬럼) 정렬 비활성
-              const isSortable = col.sortable !== false && col.label !== ''
-              const isActive = sortKey === col.key
-              return (
-                <th
-                  key={col.key}
-                  style={col.width ? { width: col.width } : undefined}
-                  className={`
-                    px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider
-                    ${isSortable ? 'cursor-pointer select-none hover:text-gray-900 hover:bg-gray-100 transition-colors' : ''}
-                  `}
-                  onClick={isSortable ? () => handleSort(col.key) : undefined}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    {col.label}
-                    {isSortable && (
-                      <span className={`inline-flex flex-col text-[10px] leading-none ${isActive ? 'text-teal-600' : 'text-gray-300'}`}>
-                        <span className={isActive && sortDir === 'asc' ? 'text-teal-600' : 'text-gray-300'}>▲</span>
-                        <span className={isActive && sortDir === 'desc' ? 'text-teal-600' : 'text-gray-300'}>▼</span>
-                      </span>
-                    )}
-                  </span>
-                </th>
-              )
-            })}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-100">
-          {sortedData.length === 0 ? (
+      <div className="overflow-auto max-h-[70vh]">
+        <table className="divide-y divide-gray-200" style={{ minWidth: '100%', tableLayout: 'fixed', width: columns.reduce((sum, col) => sum + (widths[col.key] ?? 120), 0) }}>
+          <thead className="bg-gray-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e5e7eb]">
             <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-gray-500">
-                {emptyMessage}
-              </td>
+              {columns.map((col) => {
+                const isSortable = col.sortable !== false && col.label !== ''
+                const isActive = sortKey === col.key
+                const w = widths[col.key] ?? 120
+                return (
+                  <th
+                    key={col.key}
+                    style={{ width: w, minWidth: 40, position: 'relative' }}
+                    className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider ${isSortable ? 'cursor-pointer select-none hover:text-gray-900 hover:bg-gray-100 transition-colors' : ''}`}
+                    onClick={isSortable ? () => handleSort(col.key) : undefined}
+                  >
+                    <span className="inline-flex items-center gap-1 truncate">
+                      {col.label}
+                      {isSortable && (
+                        <span className={`inline-flex flex-col text-[10px] leading-none ${isActive ? 'text-teal-600' : 'text-gray-300'}`}>
+                          <span className={isActive && sortDir === 'asc' ? 'text-teal-600' : 'text-gray-300'}>▲</span>
+                          <span className={isActive && sortDir === 'desc' ? 'text-teal-600' : 'text-gray-300'}>▼</span>
+                        </span>
+                      )}
+                    </span>
+                    {/* 드래그 리사이즈 핸들 */}
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-teal-400 active:bg-teal-500 transition-colors"
+                      onMouseDown={(e) => onMouseDown(e, col.key)}
+                    />
+                  </th>
+                )
+              })}
             </tr>
-          ) : (
-            sortedData.map((row, idx) => (
-              <tr
-                key={String(row[keyField] ?? idx)}
-                onClick={() => onRowClick?.(row)}
-                className={onRowClick ? 'cursor-pointer hover:bg-teal-50' : 'hover:bg-gray-50'}
-              >
-                {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {col.render ? col.render(row[col.key], row, idx) : String(row[col.key] ?? '')}
-                  </td>
-                ))}
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-100">
+            {sortedData.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-gray-500">{emptyMessage}</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+            ) : (
+              sortedData.map((row, idx) => (
+                <tr key={String(row[keyField] ?? idx)} onClick={() => onRowClick?.(row)} className={onRowClick ? 'cursor-pointer hover:bg-teal-50' : 'hover:bg-gray-50'}>
+                  {columns.map((col) => (
+                    <td key={col.key} style={{ width: widths[col.key] ?? 120 }} className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis">
+                      {col.render ? col.render(row[col.key], row, idx) : String(row[col.key] ?? '')}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

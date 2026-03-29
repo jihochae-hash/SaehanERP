@@ -54,7 +54,7 @@ export default function ItemListPage() {
 
   // 검색어가 있으면 전체 로드, 없으면 200건만
   const maxDocs = activeSearch ? 0 : 200
-  const { data: items = [] } = useCollection<Item>('items', [orderBy('code', 'asc')], ['all', activeSearch], maxDocs)
+  const { data: items = [] } = useCollection<Item>('items', [orderBy('createdAt', 'desc')], ['all', activeSearch], maxDocs)
   const updateMutation = useUpdateDocument('items')
   const deleteMutation = useDeleteDocument('items')
 
