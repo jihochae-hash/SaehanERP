@@ -80,7 +80,7 @@ export default function FormulaDetailPage() {
   })
 
   const watchedProductId = watch('linkedProductItemId')
-  const finishedItems = allItems.filter((i) => i.type === 'finished' || i.type === 'semi_finished')
+  const finishedItems = allItems.filter((i) => i.type === 'finished' || i.type === 'bulk')
   const productOptions = [{ value: '', label: '(미연결)' }, ...finishedItems.map((i) => ({ value: i.id, label: `[${i.code}] ${i.name}` }))]
 
   // 같은 완제품에 연결된 다른 처방 목록

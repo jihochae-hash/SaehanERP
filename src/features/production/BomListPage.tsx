@@ -36,8 +36,8 @@ export default function BomListPage() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<BomForm>()
   const { register: regItem, handleSubmit: handleItem, reset: resetItem } = useForm<BomItemForm>()
 
-  const finishedItems = items.filter((i) => i.type === 'finished' || i.type === 'semi_finished')
-  const materialItems = items.filter((i) => i.type === 'raw_material' || i.type === 'sub_material' || i.type === 'packaging')
+  const finishedItems = items.filter((i) => i.type === 'finished' || i.type === 'bulk')
+  const materialItems = items.filter((i) => i.type === 'raw_material' || i.type === 'sub_material' || i.type === 'filling')
 
   const productOptions = finishedItems.map((i) => ({ value: i.id, label: `[${i.code}] ${i.name}` }))
   const materialOptions = materialItems.map((i) => ({ value: i.id, label: `[${i.code}] ${i.name}` }))
