@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
@@ -5,72 +6,60 @@ import { MainLayout } from '@/components/layout'
 import { AuthGuard } from '@/components/guards'
 import { RoleGuard } from '@/components/guards'
 import LoginPage from '@/features/auth/LoginPage'
-import UserManagePage from '@/features/auth/UserManagePage'
 import DashboardHome from '@/features/dashboard/DashboardHome'
-// 기초정보
-import ItemListPage from '@/features/master/ItemListPage'
-import PartnerListPage from '@/features/master/PartnerListPage'
-import WarehouseListPage from '@/features/master/WarehouseListPage'
-// 영업관리
-import QuotationPage from '@/features/sales/QuotationPage'
-import SalesOrderPage from '@/features/sales/SalesOrderPage'
-import ShipmentPage from '@/features/sales/ShipmentPage'
-import SalesStatementPage from '@/features/sales/SalesStatementPage'
-import SalesAnalysisPage from '@/features/sales/SalesAnalysisPage'
-// CRM
-import ContactLogPage from '@/features/crm/ContactLogPage'
-import CustomerGradePage from '@/features/crm/CustomerGradePage'
-import ServiceRequestPage from '@/features/crm/ServiceRequestPage'
-// R&D
-import IngredientListPage from '@/features/rnd/IngredientListPage'
-import FormulaListPage from '@/features/rnd/FormulaListPage'
-import FormulaDetailPage from '@/features/rnd/FormulaDetailPage'
-// 생산관리
-import BomListPage from '@/features/production/BomListPage'
-import WorkOrderListPage from '@/features/production/WorkOrderListPage'
-import ProductionPlanPage from '@/features/production/ProductionPlanPage'
-import WeighingPage from '@/features/production/WeighingPage'
-import ManufacturingPage from '@/features/production/ManufacturingPage'
-import PackagingPage from '@/features/production/PackagingPage'
-import ProductionMonitorPage from '@/features/production/ProductionMonitorPage'
-// 구매관리
-import PurchaseOrderPage from '@/features/purchasing/PurchaseOrderPage'
-import MrpPage from '@/features/purchasing/MrpPage'
-// 품질관리
-import InspectionListPage from '@/features/quality/InspectionListPage'
-import CapaListPage from '@/features/quality/CapaListPage'
-import CgmpDocListPage from '@/features/quality/CgmpDocListPage'
-// 재고관리
-import IncomingPage from '@/features/inventory/IncomingPage'
-import OutgoingPage from '@/features/inventory/OutgoingPage'
-import StockListPage from '@/features/inventory/StockListPage'
-import TransactionListPage from '@/features/inventory/TransactionListPage'
-import TransferPage from '@/features/inventory/TransferPage'
-import InventoryLedgerPage from '@/features/inventory/InventoryLedgerPage'
-import StockCountPage from '@/features/inventory/StockCountPage'
-import SafetyStockAlertPage from '@/features/inventory/SafetyStockAlertPage'
-import LotTrackingPage from '@/features/inventory/LotTrackingPage'
-// 원가/외주
-import CostCalculationPage from '@/features/cost/CostCalculationPage'
-import OutsourcingOrderPage from '@/features/outsourcing/OutsourcingOrderPage'
-// 회계/세무
-import JournalEntryPage from '@/features/accounting/JournalEntryPage'
-import FinancialStatementPage from '@/features/accounting/FinancialStatementPage'
-import TaxInvoicePage from '@/features/accounting/TaxInvoicePage'
-// 인사/급여
-import EmployeeListPage from '@/features/hr/EmployeeListPage'
-import AttendancePage from '@/features/hr/AttendancePage'
-import PayrollPage from '@/features/hr/PayrollPage'
-// 설비
-import EquipmentListPage from '@/features/equipment/EquipmentListPage'
-import MaintenanceLogPage from '@/features/equipment/MaintenanceLogPage'
-// 전자결재/계약
-import ApprovalRequestPage from '@/features/approval/ApprovalRequestPage'
-import ContractListPage from '@/features/contract/ContractListPage'
-// 그룹웨어
-import NoticeBoardPage from '@/features/groupware/NoticeBoardPage'
-import SchedulePage from '@/features/groupware/SchedulePage'
-import FileSharePage from '@/features/groupware/FileSharePage'
+
+// 지연 로딩: 페이지 진입 시에만 코드 로드
+const UserManagePage = lazy(() => import('@/features/auth/UserManagePage'))
+const ItemListPage = lazy(() => import('@/features/master/ItemListPage'))
+const PartnerListPage = lazy(() => import('@/features/master/PartnerListPage'))
+const WarehouseListPage = lazy(() => import('@/features/master/WarehouseListPage'))
+const QuotationPage = lazy(() => import('@/features/sales/QuotationPage'))
+const SalesOrderPage = lazy(() => import('@/features/sales/SalesOrderPage'))
+const ShipmentPage = lazy(() => import('@/features/sales/ShipmentPage'))
+const SalesStatementPage = lazy(() => import('@/features/sales/SalesStatementPage'))
+const SalesAnalysisPage = lazy(() => import('@/features/sales/SalesAnalysisPage'))
+const ContactLogPage = lazy(() => import('@/features/crm/ContactLogPage'))
+const CustomerGradePage = lazy(() => import('@/features/crm/CustomerGradePage'))
+const ServiceRequestPage = lazy(() => import('@/features/crm/ServiceRequestPage'))
+const IngredientListPage = lazy(() => import('@/features/rnd/IngredientListPage'))
+const FormulaListPage = lazy(() => import('@/features/rnd/FormulaListPage'))
+const FormulaDetailPage = lazy(() => import('@/features/rnd/FormulaDetailPage'))
+const BomListPage = lazy(() => import('@/features/production/BomListPage'))
+const WorkOrderListPage = lazy(() => import('@/features/production/WorkOrderListPage'))
+const ProductionPlanPage = lazy(() => import('@/features/production/ProductionPlanPage'))
+const WeighingPage = lazy(() => import('@/features/production/WeighingPage'))
+const ManufacturingPage = lazy(() => import('@/features/production/ManufacturingPage'))
+const PackagingPage = lazy(() => import('@/features/production/PackagingPage'))
+const ProductionMonitorPage = lazy(() => import('@/features/production/ProductionMonitorPage'))
+const PurchaseOrderPage = lazy(() => import('@/features/purchasing/PurchaseOrderPage'))
+const MrpPage = lazy(() => import('@/features/purchasing/MrpPage'))
+const InspectionListPage = lazy(() => import('@/features/quality/InspectionListPage'))
+const CapaListPage = lazy(() => import('@/features/quality/CapaListPage'))
+const CgmpDocListPage = lazy(() => import('@/features/quality/CgmpDocListPage'))
+const IncomingPage = lazy(() => import('@/features/inventory/IncomingPage'))
+const OutgoingPage = lazy(() => import('@/features/inventory/OutgoingPage'))
+const StockListPage = lazy(() => import('@/features/inventory/StockListPage'))
+const TransactionListPage = lazy(() => import('@/features/inventory/TransactionListPage'))
+const TransferPage = lazy(() => import('@/features/inventory/TransferPage'))
+const InventoryLedgerPage = lazy(() => import('@/features/inventory/InventoryLedgerPage'))
+const StockCountPage = lazy(() => import('@/features/inventory/StockCountPage'))
+const SafetyStockAlertPage = lazy(() => import('@/features/inventory/SafetyStockAlertPage'))
+const LotTrackingPage = lazy(() => import('@/features/inventory/LotTrackingPage'))
+const CostCalculationPage = lazy(() => import('@/features/cost/CostCalculationPage'))
+const OutsourcingOrderPage = lazy(() => import('@/features/outsourcing/OutsourcingOrderPage'))
+const JournalEntryPage = lazy(() => import('@/features/accounting/JournalEntryPage'))
+const FinancialStatementPage = lazy(() => import('@/features/accounting/FinancialStatementPage'))
+const TaxInvoicePage = lazy(() => import('@/features/accounting/TaxInvoicePage'))
+const EmployeeListPage = lazy(() => import('@/features/hr/EmployeeListPage'))
+const AttendancePage = lazy(() => import('@/features/hr/AttendancePage'))
+const PayrollPage = lazy(() => import('@/features/hr/PayrollPage'))
+const EquipmentListPage = lazy(() => import('@/features/equipment/EquipmentListPage'))
+const MaintenanceLogPage = lazy(() => import('@/features/equipment/MaintenanceLogPage'))
+const ApprovalRequestPage = lazy(() => import('@/features/approval/ApprovalRequestPage'))
+const ContractListPage = lazy(() => import('@/features/contract/ContractListPage'))
+const NoticeBoardPage = lazy(() => import('@/features/groupware/NoticeBoardPage'))
+const SchedulePage = lazy(() => import('@/features/groupware/SchedulePage'))
+const FileSharePage = lazy(() => import('@/features/groupware/FileSharePage'))
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
@@ -79,6 +68,21 @@ const queryClient = new QueryClient({
 function AuthProvider({ children }: { children: React.ReactNode }) {
   useAuth()
   return <>{children}</>
+}
+
+function PageLoading() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <svg className="animate-spin h-6 w-6 text-teal-600" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    </div>
+  )
+}
+
+function L({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageLoading />}>{children}</Suspense>
 }
 
 function App() {
@@ -91,71 +95,71 @@ function App() {
             <Route element={<AuthGuard><MainLayout /></AuthGuard>}>
               <Route path="/dashboard" element={<DashboardHome />} />
               {/* 기초정보 */}
-              <Route path="/master/items" element={<RoleGuard module="inventory"><ItemListPage /></RoleGuard>} />
-              <Route path="/master/partners" element={<PartnerListPage />} />
-              <Route path="/master/warehouses" element={<RoleGuard module="inventory"><WarehouseListPage /></RoleGuard>} />
-              {/* 영업관리 */}
-              <Route path="/sales/quotations" element={<RoleGuard module="sales"><QuotationPage /></RoleGuard>} />
-              <Route path="/sales/orders" element={<RoleGuard module="sales"><SalesOrderPage /></RoleGuard>} />
-              <Route path="/sales/shipments" element={<RoleGuard module="sales"><ShipmentPage /></RoleGuard>} />
-              <Route path="/sales/statements" element={<RoleGuard module="sales"><SalesStatementPage /></RoleGuard>} />
-              <Route path="/sales/analysis" element={<RoleGuard module="sales"><SalesAnalysisPage /></RoleGuard>} />
+              <Route path="/master/items" element={<L><RoleGuard module="inventory"><ItemListPage /></RoleGuard></L>} />
+              <Route path="/master/partners" element={<L><PartnerListPage /></L>} />
+              <Route path="/master/warehouses" element={<L><RoleGuard module="inventory"><WarehouseListPage /></RoleGuard></L>} />
+              {/* 영업 */}
+              <Route path="/sales/quotations" element={<L><RoleGuard module="sales"><QuotationPage /></RoleGuard></L>} />
+              <Route path="/sales/orders" element={<L><RoleGuard module="sales"><SalesOrderPage /></RoleGuard></L>} />
+              <Route path="/sales/shipments" element={<L><RoleGuard module="sales"><ShipmentPage /></RoleGuard></L>} />
+              <Route path="/sales/statements" element={<L><RoleGuard module="sales"><SalesStatementPage /></RoleGuard></L>} />
+              <Route path="/sales/analysis" element={<L><RoleGuard module="sales"><SalesAnalysisPage /></RoleGuard></L>} />
               {/* CRM */}
-              <Route path="/crm/contacts" element={<RoleGuard module="crm"><ContactLogPage /></RoleGuard>} />
-              <Route path="/crm/grades" element={<RoleGuard module="crm"><CustomerGradePage /></RoleGuard>} />
-              <Route path="/crm/service" element={<RoleGuard module="crm"><ServiceRequestPage /></RoleGuard>} />
+              <Route path="/crm/contacts" element={<L><RoleGuard module="crm"><ContactLogPage /></RoleGuard></L>} />
+              <Route path="/crm/grades" element={<L><RoleGuard module="crm"><CustomerGradePage /></RoleGuard></L>} />
+              <Route path="/crm/service" element={<L><RoleGuard module="crm"><ServiceRequestPage /></RoleGuard></L>} />
               {/* R&D */}
-              <Route path="/rnd/ingredients" element={<RoleGuard module="rnd"><IngredientListPage /></RoleGuard>} />
-              <Route path="/rnd/formulas" element={<RoleGuard module="rnd"><FormulaListPage /></RoleGuard>} />
-              <Route path="/rnd/formulas/:id" element={<RoleGuard module="rnd"><FormulaDetailPage /></RoleGuard>} />
-              {/* 생산관리 */}
-              <Route path="/production/plans" element={<RoleGuard module="production"><ProductionPlanPage /></RoleGuard>} />
-              <Route path="/production/work-orders" element={<RoleGuard module="production"><WorkOrderListPage /></RoleGuard>} />
-              <Route path="/production/bom" element={<RoleGuard module="production"><BomListPage /></RoleGuard>} />
-              <Route path="/production/weighing" element={<RoleGuard module="production"><WeighingPage /></RoleGuard>} />
-              <Route path="/production/manufacturing" element={<RoleGuard module="production"><ManufacturingPage /></RoleGuard>} />
-              <Route path="/production/packaging" element={<RoleGuard module="production"><PackagingPage /></RoleGuard>} />
-              <Route path="/production/monitor" element={<RoleGuard module="production"><ProductionMonitorPage /></RoleGuard>} />
-              {/* 구매관리 */}
-              <Route path="/purchasing/orders" element={<RoleGuard module="purchasing"><PurchaseOrderPage /></RoleGuard>} />
-              <Route path="/purchasing/mrp" element={<RoleGuard module="mrp"><MrpPage /></RoleGuard>} />
-              {/* 품질관리 */}
-              <Route path="/quality/inspections" element={<RoleGuard module="quality"><InspectionListPage /></RoleGuard>} />
-              <Route path="/quality/capa" element={<RoleGuard module="quality"><CapaListPage /></RoleGuard>} />
-              <Route path="/quality/cgmp" element={<RoleGuard module="quality"><CgmpDocListPage /></RoleGuard>} />
-              {/* 재고관리 */}
-              <Route path="/inventory/incoming" element={<RoleGuard module="inventory"><IncomingPage /></RoleGuard>} />
-              <Route path="/inventory/outgoing" element={<RoleGuard module="inventory"><OutgoingPage /></RoleGuard>} />
-              <Route path="/inventory/stock" element={<RoleGuard module="inventory"><StockListPage /></RoleGuard>} />
-              <Route path="/inventory/transactions" element={<RoleGuard module="inventory"><TransactionListPage /></RoleGuard>} />
-              <Route path="/inventory/transfer" element={<RoleGuard module="inventory"><TransferPage /></RoleGuard>} />
-              <Route path="/inventory/ledger" element={<RoleGuard module="inventory"><InventoryLedgerPage /></RoleGuard>} />
-              <Route path="/inventory/count" element={<RoleGuard module="inventory"><StockCountPage /></RoleGuard>} />
-              <Route path="/inventory/safety-stock" element={<RoleGuard module="inventory"><SafetyStockAlertPage /></RoleGuard>} />
-              <Route path="/inventory/lot" element={<RoleGuard module="inventory"><LotTrackingPage /></RoleGuard>} />
+              <Route path="/rnd/ingredients" element={<L><RoleGuard module="rnd"><IngredientListPage /></RoleGuard></L>} />
+              <Route path="/rnd/formulas" element={<L><RoleGuard module="rnd"><FormulaListPage /></RoleGuard></L>} />
+              <Route path="/rnd/formulas/:id" element={<L><RoleGuard module="rnd"><FormulaDetailPage /></RoleGuard></L>} />
+              {/* 생산 */}
+              <Route path="/production/plans" element={<L><RoleGuard module="production"><ProductionPlanPage /></RoleGuard></L>} />
+              <Route path="/production/work-orders" element={<L><RoleGuard module="production"><WorkOrderListPage /></RoleGuard></L>} />
+              <Route path="/production/bom" element={<L><RoleGuard module="production"><BomListPage /></RoleGuard></L>} />
+              <Route path="/production/weighing" element={<L><RoleGuard module="production"><WeighingPage /></RoleGuard></L>} />
+              <Route path="/production/manufacturing" element={<L><RoleGuard module="production"><ManufacturingPage /></RoleGuard></L>} />
+              <Route path="/production/packaging" element={<L><RoleGuard module="production"><PackagingPage /></RoleGuard></L>} />
+              <Route path="/production/monitor" element={<L><RoleGuard module="production"><ProductionMonitorPage /></RoleGuard></L>} />
+              {/* 구매 */}
+              <Route path="/purchasing/orders" element={<L><RoleGuard module="purchasing"><PurchaseOrderPage /></RoleGuard></L>} />
+              <Route path="/purchasing/mrp" element={<L><RoleGuard module="mrp"><MrpPage /></RoleGuard></L>} />
+              {/* 품질 */}
+              <Route path="/quality/inspections" element={<L><RoleGuard module="quality"><InspectionListPage /></RoleGuard></L>} />
+              <Route path="/quality/capa" element={<L><RoleGuard module="quality"><CapaListPage /></RoleGuard></L>} />
+              <Route path="/quality/cgmp" element={<L><RoleGuard module="quality"><CgmpDocListPage /></RoleGuard></L>} />
+              {/* 재고 */}
+              <Route path="/inventory/incoming" element={<L><RoleGuard module="inventory"><IncomingPage /></RoleGuard></L>} />
+              <Route path="/inventory/outgoing" element={<L><RoleGuard module="inventory"><OutgoingPage /></RoleGuard></L>} />
+              <Route path="/inventory/stock" element={<L><RoleGuard module="inventory"><StockListPage /></RoleGuard></L>} />
+              <Route path="/inventory/transactions" element={<L><RoleGuard module="inventory"><TransactionListPage /></RoleGuard></L>} />
+              <Route path="/inventory/transfer" element={<L><RoleGuard module="inventory"><TransferPage /></RoleGuard></L>} />
+              <Route path="/inventory/ledger" element={<L><RoleGuard module="inventory"><InventoryLedgerPage /></RoleGuard></L>} />
+              <Route path="/inventory/count" element={<L><RoleGuard module="inventory"><StockCountPage /></RoleGuard></L>} />
+              <Route path="/inventory/safety-stock" element={<L><RoleGuard module="inventory"><SafetyStockAlertPage /></RoleGuard></L>} />
+              <Route path="/inventory/lot" element={<L><RoleGuard module="inventory"><LotTrackingPage /></RoleGuard></L>} />
               {/* 원가/외주 */}
-              <Route path="/cost/calculation" element={<RoleGuard module="cost"><CostCalculationPage /></RoleGuard>} />
-              <Route path="/outsourcing/orders" element={<RoleGuard module="outsourcing"><OutsourcingOrderPage /></RoleGuard>} />
-              {/* 회계/세무 */}
-              <Route path="/accounting/journal" element={<RoleGuard module="accounting"><JournalEntryPage /></RoleGuard>} />
-              <Route path="/accounting/financial" element={<RoleGuard module="accounting"><FinancialStatementPage /></RoleGuard>} />
-              <Route path="/accounting/tax-invoice" element={<RoleGuard module="tax"><TaxInvoicePage /></RoleGuard>} />
-              {/* 인사/급여 */}
-              <Route path="/hr/employees" element={<RoleGuard module="hr"><EmployeeListPage /></RoleGuard>} />
-              <Route path="/hr/attendance" element={<RoleGuard module="hr"><AttendancePage /></RoleGuard>} />
-              <Route path="/hr/payroll" element={<RoleGuard module="payroll"><PayrollPage /></RoleGuard>} />
+              <Route path="/cost/calculation" element={<L><RoleGuard module="cost"><CostCalculationPage /></RoleGuard></L>} />
+              <Route path="/outsourcing/orders" element={<L><RoleGuard module="outsourcing"><OutsourcingOrderPage /></RoleGuard></L>} />
+              {/* 회계 */}
+              <Route path="/accounting/journal" element={<L><RoleGuard module="accounting"><JournalEntryPage /></RoleGuard></L>} />
+              <Route path="/accounting/financial" element={<L><RoleGuard module="accounting"><FinancialStatementPage /></RoleGuard></L>} />
+              <Route path="/accounting/tax-invoice" element={<L><RoleGuard module="tax"><TaxInvoicePage /></RoleGuard></L>} />
+              {/* 인사 */}
+              <Route path="/hr/employees" element={<L><RoleGuard module="hr"><EmployeeListPage /></RoleGuard></L>} />
+              <Route path="/hr/attendance" element={<L><RoleGuard module="hr"><AttendancePage /></RoleGuard></L>} />
+              <Route path="/hr/payroll" element={<L><RoleGuard module="payroll"><PayrollPage /></RoleGuard></L>} />
               {/* 설비 */}
-              <Route path="/equipment/list" element={<RoleGuard module="equipment"><EquipmentListPage /></RoleGuard>} />
-              <Route path="/equipment/maintenance" element={<RoleGuard module="equipment"><MaintenanceLogPage /></RoleGuard>} />
-              {/* 전자결재/계약 */}
-              <Route path="/approval/requests" element={<RoleGuard module="approval"><ApprovalRequestPage /></RoleGuard>} />
-              <Route path="/contract/list" element={<RoleGuard module="contract"><ContractListPage /></RoleGuard>} />
+              <Route path="/equipment/list" element={<L><RoleGuard module="equipment"><EquipmentListPage /></RoleGuard></L>} />
+              <Route path="/equipment/maintenance" element={<L><RoleGuard module="equipment"><MaintenanceLogPage /></RoleGuard></L>} />
+              {/* 결재/계약 */}
+              <Route path="/approval/requests" element={<L><RoleGuard module="approval"><ApprovalRequestPage /></RoleGuard></L>} />
+              <Route path="/contract/list" element={<L><RoleGuard module="contract"><ContractListPage /></RoleGuard></L>} />
               {/* 그룹웨어 */}
-              <Route path="/groupware/notice" element={<RoleGuard module="groupware"><NoticeBoardPage /></RoleGuard>} />
-              <Route path="/groupware/schedule" element={<SchedulePage />} />
-              <Route path="/groupware/files" element={<RoleGuard module="groupware"><FileSharePage /></RoleGuard>} />
-              {/* 시스템관리 */}
-              <Route path="/admin/users" element={<RoleGuard ceoOnly><UserManagePage /></RoleGuard>} />
+              <Route path="/groupware/notice" element={<L><RoleGuard module="groupware"><NoticeBoardPage /></RoleGuard></L>} />
+              <Route path="/groupware/schedule" element={<L><SchedulePage /></L>} />
+              <Route path="/groupware/files" element={<L><RoleGuard module="groupware"><FileSharePage /></RoleGuard></L>} />
+              {/* 시스템 */}
+              <Route path="/admin/users" element={<L><RoleGuard ceoOnly><UserManagePage /></RoleGuard></L>} />
               <Route path="/admin/audit" element={<RoleGuard ceoOnly><Placeholder title="감사로그" /></RoleGuard>} />
             </Route>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -170,10 +174,7 @@ function App() {
 function Placeholder({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
-        <p className="text-gray-500">구현 예정</p>
-      </div>
+      <h2 className="text-xl font-semibold text-gray-900">{title} — 구현 예정</h2>
     </div>
   )
 }

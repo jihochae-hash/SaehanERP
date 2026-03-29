@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { type QueryConstraint } from 'firebase/firestore'
+import { type QueryConstraint, limit as fbLimit } from 'firebase/firestore'
 import * as firestoreService from '@/services/firestore.service'
 import { useAuthStore } from '@/stores/auth'
 
@@ -12,15 +12,23 @@ export function useDocument<T>(collectionName: string, docId: string | undefined
   })
 }
 
-/** 컬렉션 조회 훅 */
+/**
+ * 컬렉션 조회 훅
+ * maxDocs: 최대 로드 건수 (기본 200, 0이면 무제한)
+ */
 export function useCollection<T>(
   collectionName: string,
   constraints: QueryConstraint[] = [],
   queryKeyExtra?: unknown[],
+  maxDocs: number = 200,
 ) {
+  const finalConstraints = maxDocs > 0
+    ? [...constraints, fbLimit(maxDocs)]
+    : constraints
+
   return useQuery({
     queryKey: [collectionName, 'list', ...(queryKeyExtra ?? [])],
-    queryFn: () => firestoreService.getDocuments<T>(collectionName, constraints),
+    queryFn: () => firestoreService.getDocuments<T>(collectionName, finalConstraints),
   })
 }
 
