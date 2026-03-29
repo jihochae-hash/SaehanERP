@@ -109,6 +109,35 @@ service cloud.firestore {
       allow delete: if isCeo();
     }
 
+    // ===== 구매관리 =====
+    match /purchaseOrders/{id} {
+      allow read: if isAuth() && (hasModule('purchasing') || hasModule('inventory'));
+      allow create, update: if isAuth() && hasModule('purchasing') && isLevel(2);
+      allow delete: if isCeo();
+    }
+    match /purchaseReceipts/{id} {
+      allow read: if isAuth() && (hasModule('purchasing') || hasModule('inventory'));
+      allow create, update: if isAuth() && hasModule('purchasing') && isLevel(2);
+      allow delete: if false;
+    }
+    match /mrpResults/{id} {
+      allow read: if isAuth() && (hasModule('mrp') || hasModule('purchasing'));
+      allow create, update: if isAuth() && hasModule('mrp') && isLevel(2);
+      allow delete: if isCeo();
+    }
+
+    // ===== 품질관리 =====
+    match /qualityInspections/{id} {
+      allow read: if isAuth() && (hasModule('quality') || hasModule('production'));
+      allow create, update: if isAuth() && hasModule('quality') && isLevel(2);
+      allow delete: if false;
+    }
+    match /cgmpDocuments/{id} {
+      allow read: if isAuth() && hasModule('quality');
+      allow create, update: if isAuth() && hasModule('quality') && isLevel(2);
+      allow delete: if false;
+    }
+
     // ===== 급여 (경리 + 본인만) =====
     match /payrolls/{id} {
       allow read: if isAuth() &&

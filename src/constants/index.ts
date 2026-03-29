@@ -57,6 +57,24 @@ export const SIDEBAR_MENUS = [
     ],
   },
   {
+    id: 'purchasing',
+    label: '구매관리',
+    icon: 'ShoppingCart',
+    children: [
+      { id: 'po', label: '발주서 관리', path: '/purchasing/orders', module: 'purchasing' as const },
+      { id: 'mrp', label: 'MRP 소요량', path: '/purchasing/mrp', module: 'mrp' as const },
+    ],
+  },
+  {
+    id: 'quality',
+    label: '품질관리',
+    icon: 'ClipboardCheck',
+    children: [
+      { id: 'inspection', label: '품질검사', path: '/quality/inspections', module: 'quality' as const },
+      { id: 'capa', label: '부적합/CAPA', path: '/quality/capa', module: 'quality' as const },
+    ],
+  },
+  {
     id: 'inventory',
     label: '재고관리',
     icon: 'Package',
