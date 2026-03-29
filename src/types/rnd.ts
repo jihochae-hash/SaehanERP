@@ -31,6 +31,9 @@ export interface Ingredient extends BaseDocument {
 /** 처방 상태 */
 export type FormulaStatus = 'draft' | 'review' | 'approved' | 'archived'
 
+/** 처방 유형: 제조처방(실제 배합), 표기처방(제품 라벨), 대체처방(대체 배합) */
+export type FormulaType = 'manufacturing' | 'label' | 'alternative'
+
 /** 처방 제품 유형 */
 export type ProductCategory = 'skincare' | 'makeup' | 'haircare' | 'bodycare' | 'suncare' | 'cleansing' | 'other'
 
@@ -58,6 +61,12 @@ export interface Formula extends BaseDocument {
   status: FormulaStatus
   category: ProductCategory
   usageType: ProductUsageType
+  /** 처방 유형 */
+  formulaType: FormulaType
+  /** 연결된 완제품 ID */
+  linkedProductItemId?: string | null
+  /** 연결된 완제품명 (조회 편의) */
+  linkedProductItemName?: string | null
   /** 처방 성분 목록 */
   composition: FormulaIngredient[]
   /** 총 배합 비율 (100%여야 함) */

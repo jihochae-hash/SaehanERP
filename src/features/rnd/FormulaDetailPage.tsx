@@ -4,7 +4,7 @@ import { orderBy } from 'firebase/firestore'
 import { Button, Card, Table, Modal, Input, Select, Badge } from '@/components/ui'
 import { useDocument, useCollection, useCreateDocument, useUpdateDocument } from '@/hooks/useFirestore'
 import { useForm } from 'react-hook-form'
-import type { Formula, FormulaIngredient, Ingredient, FormulaStatus, VerificationIssue } from '@/types'
+import type { Formula, FormulaIngredient, Ingredient, FormulaStatus, VerificationIssue, Item } from '@/types'
 
 const CATEGORY_OPTIONS = [
   { value: 'skincare', label: '스킨케어' },
@@ -21,11 +21,19 @@ const USAGE_TYPE_OPTIONS = [
   { value: 'rinse_off', label: 'Rinse-off (씻어내는)' },
 ]
 
+const FORMULA_TYPE_OPTIONS = [
+  { value: 'manufacturing', label: '제조처방 — 실제 제조에 사용하는 배합' },
+  { value: 'label', label: '표기처방 — 제품 라벨에 표기하는 성분' },
+  { value: 'alternative', label: '대체처방 — 원료 수급 등에 따른 대체 배합' },
+]
+
 interface FormulaForm {
   code: string
   name: string
   category: string
   usageType: string
+  formulaType: string
+  linkedProductItemId: string
   description: string
   manufacturingNotes: string
 }
@@ -43,6 +51,8 @@ export default function FormulaDetailPage() {
 
   const { data: formula } = useDocument<Formula>('formulas', isNew ? undefined : id)
   const { data: allIngredients = [] } = useCollection<Ingredient>('ingredients', [orderBy('nameKo', 'asc')], ['active'])
+  const { data: allItems = [] } = useCollection<Item>('items', [orderBy('name', 'asc')], ['active'])
+  const { data: allFormulas = [] } = useCollection<Formula>('formulas', [orderBy('createdAt', 'desc')], ['all'])
 
   const createMutation = useCreateDocument('formulas')
   const updateMutation = useUpdateDocument('formulas')
@@ -56,16 +66,27 @@ export default function FormulaDetailPage() {
     setComposition(formula.composition)
   }
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormulaForm>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormulaForm>({
     values: isNew ? undefined : {
       code: formula?.code ?? '',
       name: formula?.name ?? '',
       category: formula?.category ?? 'skincare',
       usageType: formula?.usageType ?? 'leave_on',
+      formulaType: formula?.formulaType ?? 'manufacturing',
+      linkedProductItemId: formula?.linkedProductItemId ?? '',
       description: formula?.description ?? '',
       manufacturingNotes: formula?.manufacturingNotes ?? '',
     },
   })
+
+  const watchedProductId = watch('linkedProductItemId')
+  const finishedItems = allItems.filter((i) => i.type === 'finished' || i.type === 'semi_finished')
+  const productOptions = [{ value: '', label: '(미연결)' }, ...finishedItems.map((i) => ({ value: i.id, label: `[${i.code}] ${i.name}` }))]
+
+  // 같은 완제품에 연결된 다른 처방 목록
+  const relatedFormulas = watchedProductId
+    ? allFormulas.filter((f) => f.linkedProductItemId === watchedProductId && f.id !== id)
+    : []
 
   const { register: regAdd, handleSubmit: handleAdd, reset: resetAdd } = useForm<AddIngredientForm>()
 
@@ -152,11 +173,15 @@ export default function FormulaDetailPage() {
   }
 
   const onSave = async (data: FormulaForm) => {
+    const linkedProduct = finishedItems.find((i) => i.id === data.linkedProductItemId)
     const payload = {
       code: data.code,
       name: data.name,
       category: data.category,
       usageType: data.usageType,
+      formulaType: data.formulaType || 'manufacturing',
+      linkedProductItemId: data.linkedProductItemId || null,
+      linkedProductItemName: linkedProduct?.name ?? null,
       description: data.description || null,
       manufacturingNotes: data.manufacturingNotes || null,
       composition,
@@ -209,6 +234,10 @@ export default function FormulaDetailPage() {
             <Select label="제품유형" options={CATEGORY_OPTIONS} {...register('category')} />
             <Select label="사용유형" options={USAGE_TYPE_OPTIONS} {...register('usageType')} />
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Select label="처방유형 *" options={FORMULA_TYPE_OPTIONS} {...register('formulaType')} />
+            <Select label="연결 완제품" options={productOptions} {...register('linkedProductItemId')} />
+          </div>
           <Input label="설명" {...register('description')} />
           <Input label="제조 메모" {...register('manufacturingNotes')} />
         </form>
@@ -255,6 +284,41 @@ export default function FormulaDetailPage() {
         )}
         {!showInci && <p className="text-sm text-gray-500">펼치기를 눌러 전성분표를 확인하세요.</p>}
       </Card>
+
+      {/* 같은 완제품의 다른 처방 */}
+      {relatedFormulas.length > 0 && (
+        <Card title="같은 완제품의 다른 처방" className="mb-4">
+          <div className="space-y-2">
+            {relatedFormulas.map((rf) => {
+              const typeInfo: Record<string, { label: string; color: 'blue' | 'purple' | 'yellow' }> = {
+                manufacturing: { label: '제조처방', color: 'blue' },
+                label: { label: '표기처방', color: 'purple' },
+                alternative: { label: '대체처방', color: 'yellow' },
+              }
+              const info = typeInfo[rf.formulaType] ?? { label: rf.formulaType, color: 'gray' as const }
+              return (
+                <div
+                  key={rf.id}
+                  className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                  onClick={() => navigate(`/rnd/formulas/${rf.id}`)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Badge color={info.color}>{info.label}</Badge>
+                    <span className="text-sm font-medium text-gray-900">[{rf.code}] {rf.name}</span>
+                    <span className="text-xs text-gray-500">v{rf.version}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">{rf.composition?.length ?? 0}종</span>
+                    <Badge color={rf.status === 'approved' ? 'green' : 'gray'}>
+                      {rf.status === 'approved' ? '승인' : rf.status === 'review' ? '검토중' : '작성중'}
+                    </Badge>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* 저장 */}
       <div className="flex justify-end gap-2">
