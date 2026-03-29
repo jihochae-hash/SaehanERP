@@ -3,19 +3,28 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { MainLayout } from '@/components/layout'
 import { AuthGuard } from '@/components/guards'
+import { RoleGuard } from '@/components/guards'
 import LoginPage from '@/features/auth/LoginPage'
+import UserManagePage from '@/features/auth/UserManagePage'
 import DashboardHome from '@/features/dashboard/DashboardHome'
+import ItemListPage from '@/features/master/ItemListPage'
+import PartnerListPage from '@/features/master/PartnerListPage'
+import WarehouseListPage from '@/features/master/WarehouseListPage'
+import StockListPage from '@/features/inventory/StockListPage'
+import IncomingPage from '@/features/inventory/IncomingPage'
+import OutgoingPage from '@/features/inventory/OutgoingPage'
+import TransactionListPage from '@/features/inventory/TransactionListPage'
+import LotTrackingPage from '@/features/inventory/LotTrackingPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5분
+      staleTime: 1000 * 60 * 5,
       retry: 1,
     },
   },
 })
 
-/** Auth 상태 초기화 래퍼 */
 function AuthProvider({ children }: { children: React.ReactNode }) {
   useAuth()
   return <>{children}</>
@@ -41,20 +50,20 @@ function App() {
               <Route path="/dashboard" element={<DashboardHome />} />
 
               {/* 기초정보 */}
-              <Route path="/master/items" element={<Placeholder title="품목관리" />} />
-              <Route path="/master/partners" element={<Placeholder title="거래처관리" />} />
-              <Route path="/master/warehouses" element={<Placeholder title="창고관리" />} />
+              <Route path="/master/items" element={<RoleGuard module="inventory"><ItemListPage /></RoleGuard>} />
+              <Route path="/master/partners" element={<PartnerListPage />} />
+              <Route path="/master/warehouses" element={<RoleGuard module="inventory"><WarehouseListPage /></RoleGuard>} />
 
               {/* 재고관리 */}
-              <Route path="/inventory/incoming" element={<Placeholder title="입고처리" />} />
-              <Route path="/inventory/outgoing" element={<Placeholder title="출고처리" />} />
-              <Route path="/inventory/stock" element={<Placeholder title="재고현황" />} />
-              <Route path="/inventory/transactions" element={<Placeholder title="입출고이력" />} />
-              <Route path="/inventory/lot" element={<Placeholder title="LOT추적" />} />
+              <Route path="/inventory/incoming" element={<RoleGuard module="inventory"><IncomingPage /></RoleGuard>} />
+              <Route path="/inventory/outgoing" element={<RoleGuard module="inventory"><OutgoingPage /></RoleGuard>} />
+              <Route path="/inventory/stock" element={<RoleGuard module="inventory"><StockListPage /></RoleGuard>} />
+              <Route path="/inventory/transactions" element={<RoleGuard module="inventory"><TransactionListPage /></RoleGuard>} />
+              <Route path="/inventory/lot" element={<RoleGuard module="inventory"><LotTrackingPage /></RoleGuard>} />
 
-              {/* 시스템관리 */}
-              <Route path="/admin/users" element={<Placeholder title="사용자관리" />} />
-              <Route path="/admin/audit" element={<Placeholder title="감사로그" />} />
+              {/* 시스템관리 (CEO 전용) */}
+              <Route path="/admin/users" element={<RoleGuard ceoOnly><UserManagePage /></RoleGuard>} />
+              <Route path="/admin/audit" element={<RoleGuard ceoOnly><Placeholder title="감사로그" /></RoleGuard>} />
             </Route>
 
             {/* 기본 리다이렉트 */}
@@ -67,7 +76,6 @@ function App() {
   )
 }
 
-/** 임시 플레이스홀더 (Phase 1에서 순차 구현) */
 function Placeholder({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-center py-20">
