@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
-import { orderBy } from 'firebase/firestore'
+import { useState, useCallback, useEffect } from 'react'
+import { orderBy, doc, getDoc } from 'firebase/firestore'
+import { db } from '@/firebase'
 import { Button, Card, Input, Badge, EditableTable, Modal } from '@/components/ui'
 import { useCollection, useUpdateDocument, useDeleteDocument } from '@/hooks/useFirestore'
 import { useQueryClient } from '@tanstack/react-query'
@@ -57,6 +58,14 @@ export default function ItemListPage() {
   const [isAddModalOpen, setAddModalOpen] = useState(false)
   const [newRows, setNewRows] = useState<NewItemRow[]>([])
   const [addSaving, setAddSaving] = useState(false)
+  const [typeDefaults, setTypeDefaults] = useState<Record<string, Record<string, unknown>>>({})
+
+  // 품목구분별 기본 설정 로드
+  useEffect(() => {
+    getDoc(doc(db, 'systemSettings', 'itemTypeDefaults')).then((snap) => {
+      if (snap.exists()) setTypeDefaults(snap.data() as Record<string, Record<string, unknown>>)
+    }).catch(() => {})
+  }, [])
   const [pendingChanges, setPendingChanges] = useState<Map<string, Record<string, unknown>>>(new Map())
   const [saving, setSaving] = useState(false)
   const isCeo = useAuthStore((s) => s.isCeo())
@@ -153,13 +162,19 @@ export default function ItemListPage() {
   /** 변경사항 취소 */
   const handleCancel = () => setPendingChanges(new Map())
 
-  const defaultNewRow = (): NewItemRow => ({
-    id: crypto.randomUUID(), type: 'raw_material', customerAbbr: '', customerName: '',
-    name: '', unit: 'kg', specification: '', barcode: '', procurementType: 'purchase',
-    formType: '', formTypeName: '', rawMaterialSub: '',
-    subMaterialType: '', subMaterialTypeName: '', isBaseBulk: false,
-    subCode: 'A', unitQuantity: '', safetyStock: '', requiresLotTracking: true,
-  })
+  const defaultNewRow = (type: ItemType = 'raw_material'): NewItemRow => {
+    const td = typeDefaults[type] ?? {}
+    return {
+      id: crypto.randomUUID(), type, customerAbbr: '', customerName: '',
+      name: '', unit: (td.defaultUnit as string) ?? 'kg', specification: '', barcode: '',
+      procurementType: (td.defaultProcurement as string) ?? 'purchase',
+      formType: '', formTypeName: '', rawMaterialSub: '',
+      subMaterialType: '', subMaterialTypeName: '', isBaseBulk: false,
+      subCode: 'A', unitQuantity: '',
+      safetyStock: td.defaultSafetyStock ? String(td.defaultSafetyStock) : '',
+      requiresLotTracking: (td.requiresLotTracking as boolean) ?? true,
+    }
+  }
 
   /** 모달에 빈 행 추가 */
   const addNewRow = () => {
@@ -173,9 +188,21 @@ export default function ItemListPage() {
     setNewRows((prev) => [...prev, { ...first, id: crypto.randomUUID(), name: '' }])
   }
 
-  /** 모달 행 값 변경 */
+  /** 모달 행 값 변경 — 유형 변경 시 기본값 자동 적용 */
   const updateNewRow = (id: string, key: string, value: unknown) => {
-    setNewRows((prev) => prev.map((r) => r.id === id ? { ...r, [key]: value } : r))
+    setNewRows((prev) => prev.map((r) => {
+      if (r.id !== id) return r
+      const updated = { ...r, [key]: value }
+      // 유형 변경 시 설정 기본값 적용
+      if (key === 'type') {
+        const td = typeDefaults[value as string] ?? {}
+        updated.unit = (td.defaultUnit as string) ?? updated.unit
+        updated.procurementType = (td.defaultProcurement as string) ?? updated.procurementType
+        updated.requiresLotTracking = (td.requiresLotTracking as boolean) ?? updated.requiresLotTracking
+        if (td.defaultSafetyStock) updated.safetyStock = String(td.defaultSafetyStock)
+      }
+      return updated
+    }))
   }
 
   /** 모달 행 삭제 */

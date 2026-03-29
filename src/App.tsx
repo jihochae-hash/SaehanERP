@@ -13,6 +13,7 @@ const UserManagePage = lazy(() => import('@/features/auth/UserManagePage'))
 const ItemListPage = lazy(() => import('@/features/master/ItemListPage'))
 const PartnerListPage = lazy(() => import('@/features/master/PartnerListPage'))
 const WarehouseListPage = lazy(() => import('@/features/master/WarehouseListPage'))
+const ItemTypeSettingsPage = lazy(() => import('@/features/master/ItemTypeSettingsPage'))
 const QuotationPage = lazy(() => import('@/features/sales/QuotationPage'))
 const SalesOrderPage = lazy(() => import('@/features/sales/SalesOrderPage'))
 const ShipmentPage = lazy(() => import('@/features/sales/ShipmentPage'))
@@ -98,6 +99,7 @@ function App() {
               <Route path="/master/items" element={<L><RoleGuard module="inventory"><ItemListPage /></RoleGuard></L>} />
               <Route path="/master/partners" element={<L><PartnerListPage /></L>} />
               <Route path="/master/warehouses" element={<L><RoleGuard module="inventory"><WarehouseListPage /></RoleGuard></L>} />
+              <Route path="/master/item-settings" element={<L><RoleGuard ceoOnly><ItemTypeSettingsPage /></RoleGuard></L>} />
               {/* 영업 */}
               <Route path="/sales/quotations" element={<L><RoleGuard module="sales"><QuotationPage /></RoleGuard></L>} />
               <Route path="/sales/orders" element={<L><RoleGuard module="sales"><SalesOrderPage /></RoleGuard></L>} />

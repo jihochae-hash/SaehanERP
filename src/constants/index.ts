@@ -35,6 +35,7 @@ export const SIDEBAR_MENUS = [
       { id: 'items', label: '품목관리', path: '/master/items', module: 'inventory' as const },
       { id: 'partners', label: '거래처관리', path: '/master/partners', module: null },
       { id: 'warehouses', label: '창고관리', path: '/master/warehouses', module: 'inventory' as const },
+      { id: 'item-settings', label: '품목구분 설정', path: '/master/item-settings', module: null },
     ],
   },
   {

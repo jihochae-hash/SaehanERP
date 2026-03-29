@@ -21,6 +21,12 @@ service cloud.firestore {
       allow create, delete: if false;
     }
 
+    // ===== 시스템 설정 =====
+    match /systemSettings/{id} {
+      allow read: if isAuth();
+      allow write: if isCeo();
+    }
+
     // ===== 마스터 (items, partners, warehouses, accounts) =====
     match /items/{id} {
       allow read: if isAuth();
