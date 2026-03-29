@@ -12,8 +12,15 @@ const ITEM_TYPE_OPTIONS = Object.entries(ITEM_TYPE_LABEL).map(([value, label]) =
 const UNIT_OPTIONS = [
   { value: 'kg', label: 'kg' }, { value: 'g', label: 'g' },
   { value: 'L', label: 'L' }, { value: 'mL', label: 'mL' },
-  { value: 'ea', label: 'ea' }, { value: 'box', label: 'box' },
+  { value: 'ea', label: 'EA' }, { value: 'box', label: 'box' },
   { value: 'set', label: 'set' }, { value: 'pack', label: 'pack' },
+]
+
+const PROCUREMENT_OPTIONS = [
+  { value: 'production', label: '생산' },
+  { value: 'purchase', label: '구매' },
+  { value: 'supplied', label: '사급' },
+  { value: 'development', label: '개발' },
 ]
 
 export default function ItemListPage() {
@@ -127,18 +134,22 @@ export default function ItemListPage() {
         return <Badge color="gray">{String(label)}</Badge>
       },
     },
-    { key: 'unit', label: '단위', width: '80px', type: 'select' as const, options: UNIT_OPTIONS },
-    { key: 'specification', label: '규격' },
-    { key: 'barcode', label: '바코드', width: '120px' },
-    { key: 'customerAbbr', label: '고객약칭', width: '90px' },
-    { key: 'safetyStock', label: '안전재고', width: '90px', type: 'number' as const },
-    { key: 'leadTimeDays', label: 'L/T(일)', width: '80px', type: 'number' as const },
-    {
-      key: 'requiresLotTracking', label: 'LOT관리', width: '80px', type: 'checkbox' as const,
-    },
-    {
-      key: 'isActive', label: '활성', width: '60px', type: 'checkbox' as const,
-    },
+    { key: 'unit', label: '단위', width: '70px', type: 'select' as const, options: UNIT_OPTIONS },
+    { key: 'specification', label: '규격', width: '120px' },
+    { key: 'customerAbbr', label: '고객약칭', width: '80px' },
+    { key: 'customerName', label: '고객사명', width: '100px' },
+    { key: 'procurementType', label: '조달구분', width: '80px', type: 'select' as const, options: PROCUREMENT_OPTIONS },
+    { key: 'formType', label: '제형', width: '70px' },
+    { key: 'formTypeName', label: '제형명', width: '100px' },
+    { key: 'rawMaterialSub', label: '원재료Sub', width: '80px' },
+    { key: 'subMaterialType', label: '부자재유형', width: '90px' },
+    { key: 'subMaterialTypeName', label: '부자재유형명', width: '100px' },
+    { key: 'isBaseBulk', label: 'Base벌크', width: '70px', type: 'checkbox' as const },
+    { key: 'subCode', label: 'Sub', width: '50px' },
+    { key: 'unitQuantity', label: '단위수량', width: '80px', type: 'number' as const },
+    { key: 'safetyStock', label: '안전재고', width: '80px', type: 'number' as const },
+    { key: 'requiresLotTracking', label: 'LOT', width: '50px', type: 'checkbox' as const },
+    { key: 'isActive', label: '활성', width: '50px', type: 'checkbox' as const },
   ]
 
   return (

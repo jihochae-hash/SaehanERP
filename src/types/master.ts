@@ -47,6 +47,28 @@ export interface Item extends BaseDocument {
   category?: string
   /** 고객사 약칭 (코드의 BBB 부분) */
   customerAbbr?: string
+  /** 고객사명 */
+  customerName?: string
+  /** Serial 번호 */
+  serial?: number
+  /** 조달구분 */
+  procurementType?: 'production' | 'purchase' | 'supplied' | 'development'
+  /** 원자재: 제형 */
+  formType?: string
+  /** 원자재: 제형명 */
+  formTypeName?: string
+  /** 원자재: Sub 구분 */
+  rawMaterialSub?: string
+  /** 부자재: 유형 */
+  subMaterialType?: string
+  /** 부자재: 유형명 */
+  subMaterialTypeName?: string
+  /** 충진품/제품: Base벌크 여부 */
+  isBaseBulk?: boolean
+  /** 제품: Sub 번호 (A, B, C...) */
+  subCode?: string
+  /** 제품: 단위수량 */
+  unitQuantity?: number
   safetyStock?: number
   leadTimeDays?: number
   defaultWarehouseId?: string
