@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react'
 import { orderBy } from 'firebase/firestore'
 import { Button, Card, Input, Badge, EditableTable, Modal } from '@/components/ui'
-import { useCollection, useCreateDocument, useUpdateDocument, useDeleteDocument } from '@/hooks/useFirestore'
-import { getAllDocuments, orderBy as fsOrderBy } from '@/services/firestore.service'
+import { useCollection, useUpdateDocument, useDeleteDocument } from '@/hooks/useFirestore'
+import { useQueryClient } from '@tanstack/react-query'
+import { getAllDocuments, orderBy as fsOrderBy, createDocumentWithId } from '@/services/firestore.service'
 import { useAuthStore } from '@/stores/auth'
+import { useUnsavedWarning } from '@/hooks/useUnsavedWarning'
 import type { Item, ItemType } from '@/types'
 import { ITEM_TYPE_LABEL } from '@/types/master'
 import { validateItemCode, isDuplicateCode, generateNextCode, getCodePrefix } from '@/utils/itemCode'
@@ -47,11 +49,12 @@ export default function ItemListPage() {
   const [pendingChanges, setPendingChanges] = useState<Map<string, Record<string, unknown>>>(new Map())
   const [saving, setSaving] = useState(false)
   const isCeo = useAuthStore((s) => s.isCeo())
+  const user = useAuthStore((s) => s.user)
+  const queryClient = useQueryClient()
 
   // 검색어가 있으면 전체 로드, 없으면 200건만
   const maxDocs = activeSearch ? 0 : 200
   const { data: items = [] } = useCollection<Item>('items', [orderBy('code', 'asc')], ['all', activeSearch], maxDocs)
-  const createMutation = useCreateDocument('items')
   const updateMutation = useUpdateDocument('items')
   const deleteMutation = useDeleteDocument('items')
 
@@ -85,6 +88,7 @@ export default function ItemListPage() {
   })
 
   const hasChanges = pendingChanges.size > 0
+  useUnsavedWarning(hasChanges)
 
   /** 셀 변경 → 버퍼에 저장 (DB 저장 안 함) */
   const handleChange = useCallback((rowIndex: number, key: string, value: unknown) => {
@@ -192,19 +196,22 @@ export default function ItemListPage() {
           return
         }
         codes.push(code)
-        await createMutation.mutateAsync({
+        // doc ID = 품목코드로 저장 (동시 접속 시 중복 자동 차단)
+        await createDocumentWithId('items', code, {
           code, name: row.name, type: row.type, unit: row.unit,
           customerAbbr: row.customerAbbr.toUpperCase(),
           specification: row.specification || null,
           procurementType: row.procurementType || null,
           requiresLotTracking: row.requiresLotTracking,
           isActive: true,
-        })
+        }, user?.uid ?? '')
       }
+      queryClient.invalidateQueries({ queryKey: ['items'] })
       setNewRows([])
       setAddModalOpen(false)
-    } catch {
-      alert('저장 중 오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const msg = (err as Error).message ?? '저장 중 오류'
+      alert(msg)
     } finally {
       setAddSaving(false)
     }

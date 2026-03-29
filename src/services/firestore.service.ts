@@ -69,6 +69,35 @@ export async function deleteDocument(collectionName: string, docId: string): Pro
   await deleteDoc(doc(db, collectionName, docId))
 }
 
+/** 문서 존재 여부 확인 */
+export async function documentExists(collectionName: string, docId: string): Promise<boolean> {
+  const snap = await getDoc(doc(db, collectionName, docId))
+  return snap.exists()
+}
+
+/** 문서 ID를 지정하여 생성 (이미 존재하면 에러) */
+export async function createDocumentWithId(
+  collectionName: string,
+  docId: string,
+  data: DocumentData,
+  userId: string,
+): Promise<string> {
+  const ref = doc(db, collectionName, docId)
+  const snap = await getDoc(ref)
+  if (snap.exists()) {
+    throw new Error(`이미 존재하는 코드입니다: ${docId}`)
+  }
+  const { setDoc } = await import('firebase/firestore')
+  await setDoc(ref, {
+    ...data,
+    createdAt: serverTimestamp(),
+    createdBy: userId,
+    updatedAt: serverTimestamp(),
+    updatedBy: userId,
+  })
+  return docId
+}
+
 /** 컬렉션 전체 조회 (엑셀 다운로드용, limit 없음) */
 export async function getAllDocuments<T>(
   collectionName: string,
