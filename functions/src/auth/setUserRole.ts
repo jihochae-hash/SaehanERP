@@ -18,7 +18,7 @@ const ROLE_LEVELS: Record<string, number> = {
  * Firebase Custom Claims에 role, level, modules를 설정한다.
  */
 export const setUserRole = onCall(
-  { region: "asia-northeast1" },
+  { region: "asia-northeast3" },
   async (request) => {
     // 인증 확인
     if (!request.auth) {

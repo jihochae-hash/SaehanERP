@@ -1,39 +1,24 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod/v4'
 import { Button, Input } from '@/components/ui'
 import * as authService from '@/services/auth.service'
-import type { LoginRequest } from '@/types'
-
-const loginSchema = z.object({
-  email: z.email('올바른 이메일을 입력하세요'),
-  password: z.string().min(6, '비밀번호는 6자 이상입니다'),
-})
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginRequest>()
+  const onSubmit = async () => {
+    const email = (document.getElementById('email') as HTMLInputElement)?.value?.trim() ?? ''
+    const password = (document.getElementById('password') as HTMLInputElement)?.value ?? ''
 
-  const onSubmit = async (data: LoginRequest) => {
-    // zod 수동 검증
-    const result = loginSchema.safeParse(data)
-    if (!result.success) {
-      setError(result.error.issues[0].message)
-      return
-    }
+    if (!email) { setError('이메일을 입력하세요'); return }
+    if (!password || password.length < 6) { setError('비밀번호는 6자 이상입니다'); return }
 
     setError('')
     setLoading(true)
     try {
-      await authService.login(data.email, data.password)
+      await authService.login(email, password)
       navigate('/dashboard', { replace: true })
     } catch (err: unknown) {
       const code = (err as { code?: string }).code
@@ -50,43 +35,60 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm">
-        {/* 로고 */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">새한 ERP</h1>
-          <p className="mt-2 text-sm text-gray-500">(주)새한화장품 통합 경영관리 시스템</p>
+    <div className="min-h-screen flex bg-white">
+      {/* 좌측: 브랜드 영역 */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-600 to-teal-800 items-center justify-center p-12">
+        <div className="text-center">
+          <img src="/logo.png" alt="새한화장품" className="w-28 h-28 mx-auto mb-8 brightness-0 invert" />
+          <h2 className="text-3xl font-bold text-white mb-3">Saehan ERP</h2>
+          <p className="text-teal-200 text-sm leading-relaxed">
+            (주)새한화장품<br />통합 운영관리 시스템
+          </p>
         </div>
+      </div>
 
-        {/* 로그인 폼 */}
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
-          <Input
-            id="email"
-            label="이메일"
-            type="email"
-            placeholder="email@saehan.co.kr"
-            autoComplete="email"
-            error={errors.email?.message}
-            {...register('email', { required: '이메일을 입력하세요' })}
-          />
-          <Input
-            id="password"
-            label="비밀번호"
-            type="password"
-            placeholder="비밀번호 입력"
-            autoComplete="current-password"
-            error={errors.password?.message}
-            {...register('password', { required: '비밀번호를 입력하세요' })}
-          />
+      {/* 우측: 로그인 폼 */}
+      <div className="flex-1 flex items-center justify-center px-6">
+        <div className="w-full max-w-sm">
+          {/* 모바일에서만 보이는 로고 */}
+          <div className="lg:hidden text-center mb-8">
+            <img src="/logo_full.png" alt="Sae Han Cosmetics" className="h-10 mx-auto mb-4" />
+          </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-          )}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">로그인</h1>
+            <p className="mt-1 text-sm text-gray-500">계정 정보를 입력하세요</p>
+          </div>
 
-          <Button type="submit" loading={loading} className="w-full">
-            로그인
-          </Button>
-        </form>
+          <form onSubmit={(e) => { e.preventDefault(); onSubmit() }} className="space-y-5">
+            <Input
+              id="email"
+              label="이메일"
+              type="email"
+              placeholder="email@sae-han.com"
+              autoComplete="email"
+            />
+            <Input
+              id="password"
+              label="비밀번호"
+              type="password"
+              placeholder="비밀번호 입력"
+              autoComplete="current-password"
+            />
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+            )}
+
+            <Button type="submit" loading={loading} className="w-full">
+              로그인
+            </Button>
+          </form>
+
+          <p className="mt-8 text-center text-xs text-gray-400">
+            &copy; {new Date().getFullYear()} Sae Han Cosmetics Co., Ltd.
+          </p>
+        </div>
       </div>
     </div>
   )

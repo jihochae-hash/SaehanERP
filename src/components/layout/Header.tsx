@@ -1,4 +1,6 @@
 import { useAuthStore } from '@/stores/auth'
+import { ROLE_CONFIG } from '@/constants'
+import type { UserRole } from '@/types'
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -6,6 +8,7 @@ interface HeaderProps {
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
   const { user, claims, logout } = useAuthStore()
+  const roleLabel = claims?.role ? ROLE_CONFIG[claims.role as UserRole]?.label ?? claims.role : ''
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
@@ -25,7 +28,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
       <div className="flex items-center gap-3">
         <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-gray-700">{user?.displayName ?? '사용자'}</p>
-          <p className="text-xs text-gray-500">{claims?.role ?? ''}</p>
+          <p className="text-xs text-gray-500">{roleLabel}</p>
         </div>
         <button
           onClick={logout}

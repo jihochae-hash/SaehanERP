@@ -3,7 +3,7 @@ import type { UserRole, ModuleCode, AccessLevel } from '@/types'
 /** 역할별 기본 설정 */
 export const ROLE_CONFIG = {
   ceo: {
-    label: '대표이사',
+    label: '경영진',
     level: 3 as AccessLevel,
     modules: [] as ModuleCode[], // 전체 접근
   },

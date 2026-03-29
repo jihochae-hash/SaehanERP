@@ -25,7 +25,7 @@
 | 상태관리 | Zustand | persist 사용 시 민감 데이터 제외 |
 | 라우팅 | React Router v6 | |
 | Backend/DB | Firebase Blaze Plan | Firestore, Auth, Cloud Functions, Storage |
-| Firebase 리전 | asia-northeast1 (도쿄) | 한국에서 최저 지연시간 |
+| Firebase 리전 | asia-northeast3 (서울) | 한국 로컬 리전 |
 | Hosting | Netlify | Preview Deploy 활용 |
 | 저울 연동 | Electron + Node.js | AND FG-150KAL-H (RS232C → USB) |
 | IDE | VS Code + Claude Code | |

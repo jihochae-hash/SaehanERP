@@ -15,15 +15,29 @@ export function useAuth() {
   // Firebase Auth 상태 변경 리스너
   useEffect(() => {
     const unsubscribe = authService.onAuthChange(async (firebaseUser) => {
-      if (firebaseUser) {
-        const [profile, claims] = await Promise.all([
-          authService.getUserProfile(firebaseUser.uid),
-          authService.getUserClaims(firebaseUser),
-        ])
-        setUser(profile)
-        setClaims(claims)
-        updateActivity()
-      } else {
+      try {
+        if (firebaseUser) {
+          const [profile, claims] = await Promise.all([
+            authService.getUserProfile(firebaseUser.uid).catch(() => null),
+            authService.getUserClaims(firebaseUser),
+          ])
+          // 프로필이 Firestore에 없으면 Auth 정보로 기본 프로필 생성
+          setUser(profile ?? {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email ?? '',
+            displayName: firebaseUser.displayName ?? firebaseUser.email ?? '',
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          })
+          setClaims(claims)
+          updateActivity()
+        } else {
+          setUser(null)
+          setClaims(null)
+        }
+      } catch (err) {
+        console.error('Auth 초기화 오류:', err)
         setUser(null)
         setClaims(null)
       }

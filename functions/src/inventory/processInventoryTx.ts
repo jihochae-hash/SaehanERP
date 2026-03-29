@@ -27,7 +27,7 @@ interface InventoryTxData {
  * 반드시 이 Cloud Function을 통해야 한다.
  */
 export const processInventoryTx = onCall(
-  { region: "asia-northeast1" },
+  { region: "asia-northeast3" },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "인증이 필요합니다.");

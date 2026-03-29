@@ -16,9 +16,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const isCeo = claims?.role === 'ceo'
 
-  /** 모듈 접근 권한 확인 */
   const hasAccess = (module: string | null | undefined): boolean => {
-    if (!module) return true // null이면 모든 사용자 접근 가능
+    if (!module) return true
     if (isCeo) return true
     return claims?.modules?.includes(module as never) ?? false
   }
@@ -39,37 +38,30 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* 모바일 오버레이 */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />
       )}
 
-      {/* 사이드바 */}
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-full w-60 bg-gray-900 text-white
+          fixed top-0 left-0 z-50 h-full w-60 bg-slate-900 text-white
           transform transition-transform duration-200 ease-in-out
           lg:relative lg:translate-x-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         {/* 로고 */}
-        <div className="h-14 flex items-center px-5 border-b border-gray-700">
-          <h1 className="text-lg font-bold tracking-wide">새한 ERP</h1>
+        <div className="h-14 flex items-center gap-3 px-4 border-b border-slate-700/50">
+          <img src="/logo.png" alt="새한화장품" className="w-8 h-8 brightness-0 invert opacity-90" />
+          <h1 className="text-base font-semibold tracking-wide text-white/90">Saehan ERP</h1>
         </div>
 
         {/* 메뉴 */}
         <nav className="py-3 overflow-y-auto h-[calc(100%-3.5rem)]">
           {SIDEBAR_MENUS.map((menu) => {
-            // CEO 전용 메뉴 체크
             if ('ceoOnly' in menu && menu.ceoOnly && !isCeo) return null
-            // 모듈 접근 권한 체크
             if ('module' in menu && !hasAccess(menu.module)) return null
 
-            // 자식 메뉴가 있는 경우
             if ('children' in menu && menu.children) {
               const visibleChildren = menu.children.filter((child) => hasAccess(child.module))
               if (visibleChildren.length === 0) return null
@@ -79,7 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div key={menu.id}>
                   <button
                     onClick={() => toggleExpand(menu.id)}
-                    className="w-full flex items-center justify-between px-5 py-2.5 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                    className="w-full flex items-center justify-between px-5 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
                   >
                     <span>{menu.label}</span>
                     <svg
@@ -90,7 +82,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     </svg>
                   </button>
                   {isExpanded && (
-                    <div className="bg-gray-950">
+                    <div>
                       {visibleChildren.map((child) => (
                         <button
                           key={child.id}
@@ -98,8 +90,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                           className={`
                             w-full text-left px-8 py-2 text-sm transition-colors
                             ${location.pathname === child.path
-                              ? 'text-blue-400 bg-gray-800'
-                              : 'text-gray-400 hover:text-white hover:bg-gray-800'}
+                              ? 'text-teal-400 bg-teal-500/10 border-r-2 border-teal-400'
+                              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}
                           `}
                         >
                           {child.label}
@@ -111,7 +103,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               )
             }
 
-            // 단일 메뉴
             return (
               <button
                 key={menu.id}
@@ -119,8 +110,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className={`
                   w-full text-left px-5 py-2.5 text-sm transition-colors
                   ${('path' in menu && location.pathname === menu.path)
-                    ? 'text-blue-400 bg-gray-800'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'}
+                    ? 'text-teal-400 bg-teal-500/10 border-r-2 border-teal-400'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'}
                 `}
               >
                 {menu.label}

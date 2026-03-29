@@ -16,7 +16,7 @@ interface AuditLogData {
  * auditLogs 컬렉션은 클라이언트 쓰기가 차단되어 있으므로 반드시 이 함수를 통해야 한다.
  */
 export const writeAuditLog = onCall(
-  { region: "asia-northeast1" },
+  { region: "asia-northeast3" },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "인증이 필요합니다.");
