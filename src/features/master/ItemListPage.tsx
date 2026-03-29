@@ -32,10 +32,21 @@ interface NewItemRow {
   id: string
   type: ItemType
   customerAbbr: string
+  customerName: string
   name: string
   unit: string
   specification: string
+  barcode: string
   procurementType: string
+  formType: string
+  formTypeName: string
+  rawMaterialSub: string
+  subMaterialType: string
+  subMaterialTypeName: string
+  isBaseBulk: boolean
+  subCode: string
+  unitQuantity: string
+  safetyStock: string
   requiresLotTracking: boolean
 }
 
@@ -143,14 +154,11 @@ export default function ItemListPage() {
   const handleCancel = () => setPendingChanges(new Map())
 
   const defaultNewRow = (): NewItemRow => ({
-    id: crypto.randomUUID(),
-    type: 'raw_material',
-    customerAbbr: '',
-    name: '',
-    unit: 'kg',
-    specification: '',
-    procurementType: 'purchase',
-    requiresLotTracking: true,
+    id: crypto.randomUUID(), type: 'raw_material', customerAbbr: '', customerName: '',
+    name: '', unit: 'kg', specification: '', barcode: '', procurementType: 'purchase',
+    formType: '', formTypeName: '', rawMaterialSub: '',
+    subMaterialType: '', subMaterialTypeName: '', isBaseBulk: false,
+    subCode: 'A', unitQuantity: '', safetyStock: '', requiresLotTracking: true,
   })
 
   /** 모달에 빈 행 추가 */
@@ -200,8 +208,19 @@ export default function ItemListPage() {
         await createDocumentWithId('items', code, {
           code, name: row.name, type: row.type, unit: row.unit,
           customerAbbr: row.customerAbbr.toUpperCase(),
+          customerName: row.customerName || null,
           specification: row.specification || null,
+          barcode: row.barcode || null,
           procurementType: row.procurementType || null,
+          formType: row.formType || null,
+          formTypeName: row.formTypeName || null,
+          rawMaterialSub: row.rawMaterialSub || null,
+          subMaterialType: row.subMaterialType || null,
+          subMaterialTypeName: row.subMaterialTypeName || null,
+          isBaseBulk: row.isBaseBulk,
+          subCode: row.subCode || 'A',
+          unitQuantity: row.unitQuantity ? Number(row.unitQuantity) : null,
+          safetyStock: row.safetyStock ? Number(row.safetyStock) : null,
           requiresLotTracking: row.requiresLotTracking,
           isActive: true,
         }, user?.uid ?? '')
@@ -315,54 +334,47 @@ export default function ItemListPage() {
           <p className="text-sm text-gray-500">유형과 고객약칭(3자리)을 입력하면 코드가 자동 생성됩니다. 여러 행을 추가한 후 한번에 저장하세요.</p>
 
           <div className="overflow-auto max-h-[50vh]">
-            <table className="min-w-full text-sm">
+            <table className="text-sm" style={{ minWidth: 1200 }}>
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-24">유형 *</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-20">고객약칭 *</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600">품목명 *</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-20">단위</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-28">규격</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-20">조달</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-12">LOT</th>
-                  <th className="w-8" />
+                  {[
+                    ['유형 *', 'w-20'], ['고객약칭 *', 'w-16'], ['고객사명', 'w-20'], ['품목명 *', ''], ['단위', 'w-16'],
+                    ['규격', 'w-24'], ['바코드', 'w-24'], ['조달', 'w-16'], ['제형', 'w-16'], ['제형명', 'w-20'],
+                    ['원재료Sub', 'w-16'], ['부자재유형', 'w-16'], ['부자재유형명', 'w-20'], ['Base벌크', 'w-12'],
+                    ['Sub', 'w-10'], ['단위수량', 'w-16'], ['안전재고', 'w-16'], ['LOT', 'w-10'], ['', 'w-8'],
+                  ].map(([label, w], i) => (
+                    <th key={i} className={`px-1 py-2 text-left text-xs font-semibold text-gray-600 ${w}`}>{label}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {newRows.map((row) => (
-                  <tr key={row.id}>
-                    <td className="px-1 py-1">
-                      <select value={row.type} onChange={(e) => updateNewRow(row.id, 'type', e.target.value)} className="w-full px-1 py-1 text-sm border rounded">
-                        {ITEM_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-1 py-1">
-                      <input value={row.customerAbbr} onChange={(e) => updateNewRow(row.id, 'customerAbbr', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))} placeholder="ABC" maxLength={3} className="w-full px-1 py-1 text-sm border rounded uppercase" />
-                    </td>
-                    <td className="px-1 py-1">
-                      <input value={row.name} onChange={(e) => updateNewRow(row.id, 'name', e.target.value)} placeholder="품목명 입력" className="w-full px-1 py-1 text-sm border rounded" />
-                    </td>
-                    <td className="px-1 py-1">
-                      <select value={row.unit} onChange={(e) => updateNewRow(row.id, 'unit', e.target.value)} className="w-full px-1 py-1 text-sm border rounded">
-                        {UNIT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-1 py-1">
-                      <input value={row.specification} onChange={(e) => updateNewRow(row.id, 'specification', e.target.value)} placeholder="규격" className="w-full px-1 py-1 text-sm border rounded" />
-                    </td>
-                    <td className="px-1 py-1">
-                      <select value={row.procurementType} onChange={(e) => updateNewRow(row.id, 'procurementType', e.target.value)} className="w-full px-1 py-1 text-sm border rounded">
-                        {PROCUREMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-1 py-1 text-center">
-                      <input type="checkbox" checked={row.requiresLotTracking} onChange={(e) => updateNewRow(row.id, 'requiresLotTracking', e.target.checked)} className="w-4 h-4 text-teal-600 rounded" />
-                    </td>
-                    <td className="px-1 py-1">
-                      <button onClick={() => removeNewRow(row.id)} className="text-gray-400 hover:text-red-500">✕</button>
-                    </td>
-                  </tr>
-                ))}
+                {newRows.map((row) => {
+                  const inp = "w-full px-1 py-1 text-sm border rounded"
+                  const sel = "w-full px-1 py-1 text-sm border rounded"
+                  return (
+                    <tr key={row.id}>
+                      <td className="px-1 py-1"><select value={row.type} onChange={(e) => updateNewRow(row.id, 'type', e.target.value)} className={sel}>{ITEM_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
+                      <td className="px-1 py-1"><input value={row.customerAbbr} onChange={(e) => updateNewRow(row.id, 'customerAbbr', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))} placeholder="ABC" maxLength={3} className={`${inp} uppercase`} /></td>
+                      <td className="px-1 py-1"><input value={row.customerName} onChange={(e) => updateNewRow(row.id, 'customerName', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.name} onChange={(e) => updateNewRow(row.id, 'name', e.target.value)} placeholder="품목명" className={inp} /></td>
+                      <td className="px-1 py-1"><select value={row.unit} onChange={(e) => updateNewRow(row.id, 'unit', e.target.value)} className={sel}>{UNIT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
+                      <td className="px-1 py-1"><input value={row.specification} onChange={(e) => updateNewRow(row.id, 'specification', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.barcode} onChange={(e) => updateNewRow(row.id, 'barcode', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><select value={row.procurementType} onChange={(e) => updateNewRow(row.id, 'procurementType', e.target.value)} className={sel}>{PROCUREMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
+                      <td className="px-1 py-1"><input value={row.formType} onChange={(e) => updateNewRow(row.id, 'formType', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.formTypeName} onChange={(e) => updateNewRow(row.id, 'formTypeName', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.rawMaterialSub} onChange={(e) => updateNewRow(row.id, 'rawMaterialSub', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.subMaterialType} onChange={(e) => updateNewRow(row.id, 'subMaterialType', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.subMaterialTypeName} onChange={(e) => updateNewRow(row.id, 'subMaterialTypeName', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1 text-center"><input type="checkbox" checked={row.isBaseBulk} onChange={(e) => updateNewRow(row.id, 'isBaseBulk', e.target.checked)} className="w-4 h-4 text-teal-600 rounded" /></td>
+                      <td className="px-1 py-1"><input value={row.subCode} onChange={(e) => updateNewRow(row.id, 'subCode', e.target.value.toUpperCase().slice(0, 1))} maxLength={1} className={`${inp} uppercase text-center`} /></td>
+                      <td className="px-1 py-1"><input value={row.unitQuantity} onChange={(e) => updateNewRow(row.id, 'unitQuantity', e.target.value)} type="number" className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.safetyStock} onChange={(e) => updateNewRow(row.id, 'safetyStock', e.target.value)} type="number" className={inp} /></td>
+                      <td className="px-1 py-1 text-center"><input type="checkbox" checked={row.requiresLotTracking} onChange={(e) => updateNewRow(row.id, 'requiresLotTracking', e.target.checked)} className="w-4 h-4 text-teal-600 rounded" /></td>
+                      <td className="px-1 py-1"><button onClick={() => removeNewRow(row.id)} className="text-gray-400 hover:text-red-500">✕</button></td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

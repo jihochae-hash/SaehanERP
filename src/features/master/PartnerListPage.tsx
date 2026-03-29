@@ -24,9 +24,18 @@ interface NewPartnerRow {
   businessNo: string
   representative: string
   roadAddress: string
+  businessType: string
+  businessItem: string
   phone: string
   contactPerson: string
   contactEmail: string
+  contactPhone: string
+  bankName: string
+  bankAccount: string
+  internalManager: string
+  isSales: boolean
+  isPurchase: boolean
+  notes: string
 }
 
 export default function PartnerListPage() {
@@ -97,7 +106,9 @@ export default function PartnerListPage() {
   // --- 거래처 추가 모달 ---
   const defaultNewRow = (): NewPartnerRow => ({
     id: crypto.randomUUID(), name: '', abbr: '', type: 'supplier',
-    businessNo: '', representative: '', roadAddress: '', phone: '', contactPerson: '', contactEmail: '',
+    businessNo: '', representative: '', roadAddress: '', businessType: '', businessItem: '',
+    phone: '', contactPerson: '', contactEmail: '', contactPhone: '',
+    bankName: '', bankAccount: '', internalManager: '', isSales: false, isPurchase: false, notes: '',
   })
 
   const addNewRow = () => setNewRows((prev) => [...prev, defaultNewRow()])
@@ -125,8 +136,12 @@ export default function PartnerListPage() {
         await createDocumentWithId('partners', code, {
           code, name: row.name, abbr: row.abbr || null, type: row.type,
           businessNo: row.businessNo || null, representative: row.representative || null,
-          roadAddress: row.roadAddress || null, phone: row.phone || null,
+          roadAddress: row.roadAddress || null, businessType: row.businessType || null,
+          businessItem: row.businessItem || null, phone: row.phone || null,
           contactPerson: row.contactPerson || null, contactEmail: row.contactEmail || null,
+          contactPhone: row.contactPhone || null, bankName: row.bankName || null,
+          bankAccount: row.bankAccount || null, internalManager: row.internalManager || null,
+          isSales: row.isSales, isPurchase: row.isPurchase, notes: row.notes || null,
           isActive: true,
         }, user?.uid ?? '')
       }
@@ -203,38 +218,46 @@ export default function PartnerListPage() {
         <div className="space-y-4">
           <p className="text-sm text-gray-500">거래처 코드는 자동 생성됩니다. 여러 행을 추가한 후 한번에 저장하세요.</p>
           <div className="overflow-auto max-h-[50vh]">
-            <table className="min-w-full text-sm">
+            <table className="text-sm" style={{ minWidth: 1400 }}>
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600">거래처명 *</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-16">약칭</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-20">유형</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-28">사업자번호</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-20">대표자</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600">주소</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-28">전화번호</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 w-20">담당자</th>
-                  <th className="w-8" />
+                  {[
+                    ['거래처명 *',''], ['약칭','w-16'], ['유형','w-20'], ['사업자번호','w-28'], ['대표자','w-20'],
+                    ['도로명주소',''], ['업태','w-20'], ['종목','w-20'], ['전화번호','w-28'], ['담당자','w-20'],
+                    ['담당자이메일','w-32'], ['담당자HP','w-28'], ['은행','w-16'], ['계좌번호','w-28'],
+                    ['자사담당','w-16'], ['매출','w-10'], ['매입','w-10'], ['비고','w-24'], ['','w-8'],
+                  ].map(([label, w], i) => (
+                    <th key={i} className={`px-1 py-2 text-left text-xs font-semibold text-gray-600 ${w}`}>{label}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {newRows.map((row) => (
-                  <tr key={row.id}>
-                    <td className="px-1 py-1"><input value={row.name} onChange={(e) => updateNewRow(row.id, 'name', e.target.value)} placeholder="거래처명" className="w-full px-1 py-1 text-sm border rounded" /></td>
-                    <td className="px-1 py-1"><input value={row.abbr} onChange={(e) => updateNewRow(row.id, 'abbr', e.target.value.toUpperCase().slice(0, 3))} placeholder="ABC" maxLength={3} className="w-full px-1 py-1 text-sm border rounded uppercase" /></td>
-                    <td className="px-1 py-1">
-                      <select value={row.type} onChange={(e) => updateNewRow(row.id, 'type', e.target.value)} className="w-full px-1 py-1 text-sm border rounded">
-                        {PARTNER_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-1 py-1"><input value={row.businessNo} onChange={(e) => updateNewRow(row.id, 'businessNo', e.target.value)} className="w-full px-1 py-1 text-sm border rounded" /></td>
-                    <td className="px-1 py-1"><input value={row.representative} onChange={(e) => updateNewRow(row.id, 'representative', e.target.value)} className="w-full px-1 py-1 text-sm border rounded" /></td>
-                    <td className="px-1 py-1"><input value={row.roadAddress} onChange={(e) => updateNewRow(row.id, 'roadAddress', e.target.value)} className="w-full px-1 py-1 text-sm border rounded" /></td>
-                    <td className="px-1 py-1"><input value={row.phone} onChange={(e) => updateNewRow(row.id, 'phone', e.target.value)} className="w-full px-1 py-1 text-sm border rounded" /></td>
-                    <td className="px-1 py-1"><input value={row.contactPerson} onChange={(e) => updateNewRow(row.id, 'contactPerson', e.target.value)} className="w-full px-1 py-1 text-sm border rounded" /></td>
-                    <td className="px-1 py-1"><button onClick={() => removeNewRow(row.id)} className="text-gray-400 hover:text-red-500">✕</button></td>
-                  </tr>
-                ))}
+                {newRows.map((row) => {
+                  const inp = "w-full px-1 py-1 text-sm border rounded"
+                  return (
+                    <tr key={row.id}>
+                      <td className="px-1 py-1"><input value={row.name} onChange={(e) => updateNewRow(row.id, 'name', e.target.value)} placeholder="거래처명" className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.abbr} onChange={(e) => updateNewRow(row.id, 'abbr', e.target.value.toUpperCase().slice(0, 3))} maxLength={3} className={`${inp} uppercase`} /></td>
+                      <td className="px-1 py-1"><select value={row.type} onChange={(e) => updateNewRow(row.id, 'type', e.target.value)} className={inp}>{PARTNER_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
+                      <td className="px-1 py-1"><input value={row.businessNo} onChange={(e) => updateNewRow(row.id, 'businessNo', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.representative} onChange={(e) => updateNewRow(row.id, 'representative', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.roadAddress} onChange={(e) => updateNewRow(row.id, 'roadAddress', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.businessType} onChange={(e) => updateNewRow(row.id, 'businessType', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.businessItem} onChange={(e) => updateNewRow(row.id, 'businessItem', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.phone} onChange={(e) => updateNewRow(row.id, 'phone', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.contactPerson} onChange={(e) => updateNewRow(row.id, 'contactPerson', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.contactEmail} onChange={(e) => updateNewRow(row.id, 'contactEmail', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.contactPhone} onChange={(e) => updateNewRow(row.id, 'contactPhone', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.bankName} onChange={(e) => updateNewRow(row.id, 'bankName', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.bankAccount} onChange={(e) => updateNewRow(row.id, 'bankAccount', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><input value={row.internalManager} onChange={(e) => updateNewRow(row.id, 'internalManager', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1 text-center"><input type="checkbox" checked={row.isSales} onChange={(e) => updateNewRow(row.id, 'isSales', e.target.checked)} className="w-4 h-4 text-teal-600 rounded" /></td>
+                      <td className="px-1 py-1 text-center"><input type="checkbox" checked={row.isPurchase} onChange={(e) => updateNewRow(row.id, 'isPurchase', e.target.checked)} className="w-4 h-4 text-teal-600 rounded" /></td>
+                      <td className="px-1 py-1"><input value={row.notes} onChange={(e) => updateNewRow(row.id, 'notes', e.target.value)} className={inp} /></td>
+                      <td className="px-1 py-1"><button onClick={() => removeNewRow(row.id)} className="text-gray-400 hover:text-red-500">✕</button></td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
