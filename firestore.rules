@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===== 공통 함수 =====
+    function isAuth() { return request.auth != null; }
+    function isCeo() { return request.auth.token.role == 'ceo'; }
+    function hasModule(m) { return isCeo() || (m in request.auth.token.modules); }
+    function isLevel(min) { return request.auth.token.level >= min; }
+    function isOwner(uid) { return request.auth.uid == uid; }
+
+    // ===== 기본: 모든 접근 차단 =====
+    match /{document=**} { allow read, write: if false; }
+
+    // ===== 사용자 =====
+    match /users/{userId} {
+      allow get: if isAuth() && (isOwner(userId) || isCeo());
+      allow list: if isAuth() && isCeo();
+      allow update: if isAuth() && isOwner(userId)
+        && !request.resource.data.diff(resource.data)
+          .affectedKeys().hasAny(['role','level','modules']);
+      allow create, delete: if false;
+    }
+
+    // ===== 마스터 (items, partners, warehouses, accounts) =====
+    match /items/{id} {
+      allow read: if isAuth();
+      allow create, update: if isAuth() && isLevel(2) && hasModule('inventory');
+      allow delete: if isCeo();
+    }
+    match /partners/{id} {
+      allow read: if isAuth();
+      allow create, update: if isAuth() && isLevel(2);
+      allow delete: if isCeo();
+    }
+    match /warehouses/{id} {
+      allow read: if isAuth();
+      allow write: if isAuth() && hasModule('inventory') && isLevel(2);
+    }
+    match /accounts/{id} {
+      allow read: if isAuth();
+      allow write: if isAuth() && hasModule('accounting') && isLevel(2);
+    }
+
+    // ===== Cloud Functions 전용 (클라이언트 쓰기 차단) =====
+    match /inventory/{id} {
+      allow read: if isAuth() && hasModule('inventory');
+      allow write: if false;
+    }
+    match /inventoryTransactions/{id} {
+      allow read: if isAuth() && hasModule('inventory');
+      allow write: if false;
+    }
+    match /auditLogs/{id} {
+      allow read: if isCeo();
+      allow write: if false;
+    }
+    match /approvalRequests/{id} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+    match /journalEntries/{id} {
+      allow read: if isAuth() && hasModule('accounting');
+      allow create: if isAuth() && hasModule('accounting') && isLevel(2);
+      allow update: if isAuth() && hasModule('accounting') && isLevel(2)
+        && !resource.data.isLocked;
+      allow delete: if false;
+    }
+
+    // ===== 처방 (R&D 전용 + 암호화) =====
+    match /formulas/{id} {
+      allow read: if isAuth() && hasModule('rnd');
+      allow create, update: if isAuth() && hasModule('rnd') && isLevel(2);
+      allow delete: if false;
+    }
+
+    // ===== 급여 (경리 + 본인만) =====
+    match /payrolls/{id} {
+      allow read: if isAuth() &&
+        (hasModule('payroll') || resource.data.employeeId == request.auth.uid);
+      allow write: if isAuth() && hasModule('payroll') && isLevel(2);
+    }
+    match /employees/{id} {
+      allow get: if isAuth() && (id == request.auth.uid || hasModule('hr'));
+      allow list: if isAuth() && hasModule('hr');
+      allow write: if isAuth() && hasModule('hr') && isLevel(2);
+    }
+  }
+}
