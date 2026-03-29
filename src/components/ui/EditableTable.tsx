@@ -26,6 +26,8 @@ interface EditableTableProps<T> {
   emptyMessage?: string
   /** 전체 데이터 (엑셀 다운로드용, 페이지네이션과 별개) */
   allData?: T[]
+  /** 전체 데이터 가져오기 (비동기, allData보다 우선) */
+  onFetchAllForExport?: () => Promise<T[]>
   exportFileName?: string
 }
 
@@ -37,6 +39,7 @@ export default function EditableTable<T extends Record<string, any>>({
   onChange,
   onDelete,
   allData,
+  onFetchAllForExport,
   exportFileName,
   emptyMessage = '데이터가 없습니다.',
 }: EditableTableProps<T>) {
@@ -144,9 +147,20 @@ export default function EditableTable<T extends Record<string, any>>({
     )
   }
 
-  const handleExport = () => {
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
     const exportCols = columns.filter((c) => c.label !== '')
-    const exportData = (allData ?? data) as Record<string, unknown>[]
+    let exportData: Record<string, unknown>[]
+    if (onFetchAllForExport) {
+      setExporting(true)
+      try {
+        exportData = await onFetchAllForExport() as Record<string, unknown>[]
+      } finally {
+        setExporting(false)
+      }
+    } else {
+      exportData = (allData ?? data) as Record<string, unknown>[]
+    }
     exportToExcel(exportCols, exportData, exportFileName ?? 'export')
   }
 
@@ -155,7 +169,7 @@ export default function EditableTable<T extends Record<string, any>>({
       <div className="flex justify-end mb-2">
         <button onClick={handleExport} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-          엑셀 다운로드
+          {exporting ? '전체 데이터 가져오는 중...' : '엑셀 다운로드 (전체)'}
         </button>
       </div>
     <div className="overflow-auto max-h-[70vh]">

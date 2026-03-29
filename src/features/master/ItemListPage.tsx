@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { orderBy } from 'firebase/firestore'
 import { Button, Card, Input, Badge, EditableTable } from '@/components/ui'
 import { useCollection, useCreateDocument, useUpdateDocument, useDeleteDocument } from '@/hooks/useFirestore'
+import { getAllDocuments, orderBy as fsOrderBy } from '@/services/firestore.service'
 import { useAuthStore } from '@/stores/auth'
 import type { Item, ItemType } from '@/types'
 import { ITEM_TYPE_LABEL } from '@/types/master'
@@ -216,7 +217,14 @@ export default function ItemListPage() {
             {filtered.length}건 중 {page * PAGE_SIZE + 1}~{Math.min((page + 1) * PAGE_SIZE, filtered.length)}
           </span>
         </div>
-        <EditableTable columns={columns} data={displayData} onChange={handleChange} onDelete={isCeo ? handleDelete : undefined} allData={filtered} exportFileName="품목관리" />
+        <EditableTable
+          columns={columns}
+          data={displayData}
+          onChange={handleChange}
+          onDelete={isCeo ? handleDelete : undefined}
+          exportFileName="품목관리"
+          onFetchAllForExport={() => getAllDocuments<Item>('items', [fsOrderBy('code', 'asc')])}
+        />
         {/* 페이지네이션 */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t">

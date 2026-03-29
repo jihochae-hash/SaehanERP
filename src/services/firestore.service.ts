@@ -69,5 +69,15 @@ export async function deleteDocument(collectionName: string, docId: string): Pro
   await deleteDoc(doc(db, collectionName, docId))
 }
 
+/** 컬렉션 전체 조회 (엑셀 다운로드용, limit 없음) */
+export async function getAllDocuments<T>(
+  collectionName: string,
+  constraints: QueryConstraint[] = [],
+): Promise<T[]> {
+  const q = query(collection(db, collectionName), ...constraints)
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T)
+}
+
 // 편의 re-export
 export { where, orderBy, limit, startAfter }

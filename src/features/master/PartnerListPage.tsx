@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { orderBy } from 'firebase/firestore'
 import { Button, Card, Input, EditableTable } from '@/components/ui'
 import { useCollection, useCreateDocument, useUpdateDocument, useDeleteDocument } from '@/hooks/useFirestore'
+import { getAllDocuments, orderBy as fsOrderBy } from '@/services/firestore.service'
 import { useAuthStore } from '@/stores/auth'
 import type { Partner, PartnerType } from '@/types'
 
@@ -160,7 +161,14 @@ export default function PartnerListPage() {
             {filtered.length}건 중 {page * PAGE_SIZE + 1}~{Math.min((page + 1) * PAGE_SIZE, filtered.length)}
           </span>
         </div>
-        <EditableTable columns={columns} data={displayData} onChange={handleChange} onDelete={isCeo ? handleDelete : undefined} allData={filtered} exportFileName="거래처관리" />
+        <EditableTable
+          columns={columns}
+          data={displayData}
+          onChange={handleChange}
+          onDelete={isCeo ? handleDelete : undefined}
+          exportFileName="거래처관리"
+          onFetchAllForExport={() => getAllDocuments<Partner>('partners', [fsOrderBy('code', 'asc')])}
+        />
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t">
             <Button size="sm" variant="ghost" disabled={page === 0} onClick={() => setPage(page - 1)}>이전</Button>
