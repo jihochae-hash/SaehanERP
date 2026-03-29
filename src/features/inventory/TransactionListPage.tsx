@@ -8,7 +8,8 @@ import type { InventoryTransaction, TransactionType } from '@/types'
 const TX_TYPE_BADGE: Record<TransactionType, { label: string; color: 'blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray' }> = {
   incoming: { label: '입고', color: 'blue' },
   outgoing: { label: '출고', color: 'red' },
-  transfer: { label: '이동', color: 'yellow' },
+  transfer_out: { label: '이동출고', color: 'yellow' },
+  transfer_in: { label: '이동입고', color: 'green' },
   adjustment_plus: { label: '조정(+)', color: 'green' },
   adjustment_minus: { label: '조정(-)', color: 'purple' },
   return: { label: '반품', color: 'gray' },
@@ -51,7 +52,7 @@ export default function TransactionListPage() {
       key: 'quantity', label: '수량', width: '90px',
       render: (val: unknown, row: InventoryTransaction) => {
         const qty = val as number
-        const isOut = row.type === 'outgoing' || row.type === 'adjustment_minus'
+        const isOut = row.type === 'outgoing' || row.type === 'adjustment_minus' || row.type === 'transfer_out'
         return <span className={isOut ? 'text-red-600' : 'text-blue-600'}>{isOut ? '-' : '+'}{formatNumber(qty)}</span>
       },
     },

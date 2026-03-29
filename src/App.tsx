@@ -14,6 +14,7 @@ import StockListPage from '@/features/inventory/StockListPage'
 import IncomingPage from '@/features/inventory/IncomingPage'
 import OutgoingPage from '@/features/inventory/OutgoingPage'
 import TransactionListPage from '@/features/inventory/TransactionListPage'
+import TransferPage from '@/features/inventory/TransferPage'
 import LotTrackingPage from '@/features/inventory/LotTrackingPage'
 import IngredientListPage from '@/features/rnd/IngredientListPage'
 import FormulaListPage from '@/features/rnd/FormulaListPage'
@@ -87,6 +88,7 @@ function App() {
               <Route path="/inventory/outgoing" element={<RoleGuard module="inventory"><OutgoingPage /></RoleGuard>} />
               <Route path="/inventory/stock" element={<RoleGuard module="inventory"><StockListPage /></RoleGuard>} />
               <Route path="/inventory/transactions" element={<RoleGuard module="inventory"><TransactionListPage /></RoleGuard>} />
+              <Route path="/inventory/transfer" element={<RoleGuard module="inventory"><TransferPage /></RoleGuard>} />
               <Route path="/inventory/lot" element={<RoleGuard module="inventory"><LotTrackingPage /></RoleGuard>} />
 
               {/* 시스템관리 (CEO 전용) */}

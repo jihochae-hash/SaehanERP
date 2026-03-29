@@ -109,6 +109,13 @@ service cloud.firestore {
       allow delete: if isCeo();
     }
 
+    // ===== 창고이동 =====
+    match /warehouseTransfers/{id} {
+      allow read: if isAuth() && hasModule('inventory');
+      allow create, update: if isAuth() && hasModule('inventory') && isLevel(2);
+      allow delete: if isCeo();
+    }
+
     // ===== 구매관리 =====
     match /purchaseOrders/{id} {
       allow read: if isAuth() && (hasModule('purchasing') || hasModule('inventory'));

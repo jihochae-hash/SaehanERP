@@ -84,6 +84,7 @@ export const SIDEBAR_MENUS = [
       { id: 'inv-out', label: '출고처리', path: '/inventory/outgoing', module: 'inventory' as const },
       { id: 'inv-stock', label: '재고현황', path: '/inventory/stock', module: 'inventory' as const },
       { id: 'inv-tx', label: '입출고이력', path: '/inventory/transactions', module: 'inventory' as const },
+      { id: 'inv-transfer', label: '창고이동', path: '/inventory/transfer', module: 'inventory' as const },
       { id: 'inv-lot', label: 'LOT추적', path: '/inventory/lot', module: 'inventory' as const },
     ],
   },

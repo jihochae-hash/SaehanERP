@@ -21,6 +21,7 @@ interface IncomingForm {
   quantity: string
   incomingType: string
   lotNo: string
+  location: string
   expiryDate: string
   manufactureDate: string
   notes: string
@@ -51,6 +52,7 @@ export default function IncomingPage() {
         quantity: Number(data.quantity),
         incomingType: data.incomingType,
         lotNo: data.lotNo || undefined,
+        location: data.location || undefined,
         expiryDate: data.expiryDate || undefined,
         manufactureDate: data.manufactureDate || undefined,
         notes: data.notes || undefined,
@@ -104,6 +106,7 @@ export default function IncomingPage() {
             />
             <Input label="LOT번호" placeholder="자동 생성 가능" {...register('lotNo')} />
           </div>
+          <Input label="WMS 위치 *" placeholder="예: A-01-03, 파레트-12" error={errors.location?.message} {...register('location', { required: 'WMS 위치를 입력하세요' })} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="제조일자" type="date" {...register('manufactureDate')} />
             <Input label="유효기한" type="date" {...register('expiryDate')} />
