@@ -38,6 +38,7 @@ const DEPT_ZONES: DeptZone[] = [
     id: 'inventory',
     label: '재고관리',
     x: 19, y: 0, w: 22, h: 28,
+    popupAlign: 'left',
     menus: [
       { label: '재고현황', path: '/inventory/stock' },
       { label: '수불부', path: '/inventory/ledger' },
