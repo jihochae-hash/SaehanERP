@@ -8,7 +8,8 @@
       "Read(//c/Users/gioho/**)",
       "Bash(xargs grep:*)",
       "Bash(find c:UsersgiohoDesktopSaehan-ERPsrc -path *constants* -type f)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

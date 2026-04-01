@@ -17,6 +17,8 @@ interface DeptZone {
   h: number
   menus: { label: string; path: string }[]
   popupAlign?: 'left' | 'right' | 'center'
+  /** 팝업 수직 방향 — 기본 'above', 'below'로 설정하면 아래쪽에 표시 */
+  popupVertical?: 'above' | 'below'
 }
 
 const DEPT_ZONES: DeptZone[] = [
@@ -96,6 +98,7 @@ const DEPT_ZONES: DeptZone[] = [
     id: 'bulk-mfg',
     label: '벌크제조',
     x: 40, y: 20, w: 22, h: 34,
+    popupVertical: 'below',
     menus: [
       { label: '수주/생산계획', path: '/production/plan-main' },
       { label: '작업지시서', path: '/production/work-orders' },
@@ -279,12 +282,15 @@ function DeptPopup({
   onMenuClick: (path: string) => void
 }) {
   const align = zone.popupAlign || 'center'
+  const vertical = zone.popupVertical || 'above'
   let posStyle: React.CSSProperties = {}
 
   if (align === 'left') {
     posStyle = { top: '0', left: '105%' }
   } else if (align === 'right') {
     posStyle = { top: '0', right: '105%' }
+  } else if (vertical === 'below') {
+    posStyle = { top: '105%', left: '50%', transform: 'translateX(-50%)' }
   } else {
     posStyle = { bottom: '105%', left: '50%', transform: 'translateX(-50%)' }
   }
