@@ -298,13 +298,13 @@ function DeptPopup({
   let posStyle: React.CSSProperties = {}
 
   if (align === 'left') {
-    posStyle = { top: '0', left: '105%' }
+    posStyle = { top: '0', left: '100%' }
   } else if (align === 'right') {
-    posStyle = { top: '0', right: '105%' }
+    posStyle = { top: '0', right: '100%' }
   } else if (vertical === 'below') {
-    posStyle = { top: '105%', left: '50%', transform: 'translateX(-50%)' }
+    posStyle = { top: '100%', left: '50%', transform: 'translateX(-50%)' }
   } else {
-    posStyle = { bottom: '105%', left: '50%', transform: 'translateX(-50%)' }
+    posStyle = { bottom: '100%', left: '50%', transform: 'translateX(-50%)' }
   }
 
   return (
