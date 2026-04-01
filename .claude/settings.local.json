@@ -3,7 +3,12 @@
     "allow": [
       "Bash(node scripts/upload-items.js)",
       "Bash(node scripts/upload-items.cjs)",
-      "Read(//c/Users/gioho/Desktop/Saehan-ERP/**)"
+      "Read(//c/Users/gioho/Desktop/Saehan-ERP/**)",
+      "Read(//c/Users/gioho/Desktop/**)",
+      "Read(//c/Users/gioho/**)",
+      "Bash(xargs grep:*)",
+      "Bash(find c:UsersgiohoDesktopSaehan-ERPsrc -path *constants* -type f)",
+      "Bash(npx vite:*)"
     ]
   }
 }

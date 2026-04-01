@@ -7,6 +7,7 @@ import { AuthGuard } from '@/components/guards'
 import { RoleGuard } from '@/components/guards'
 import LoginPage from '@/features/auth/LoginPage'
 import DashboardHome from '@/features/dashboard/DashboardHome'
+import FactoryMapPage from '@/features/dashboard/FactoryMapPage'
 
 // 지연 로딩: 페이지 진입 시에만 코드 로드
 const UserManagePage = lazy(() => import('@/features/auth/UserManagePage'))
@@ -61,6 +62,7 @@ const ContractListPage = lazy(() => import('@/features/contract/ContractListPage
 const NoticeBoardPage = lazy(() => import('@/features/groupware/NoticeBoardPage'))
 const SchedulePage = lazy(() => import('@/features/groupware/SchedulePage'))
 const FileSharePage = lazy(() => import('@/features/groupware/FileSharePage'))
+const ProductionPlanMainPage = lazy(() => import('@/features/production-plan/ProductionPlanMainPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
@@ -94,6 +96,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route element={<AuthGuard><MainLayout /></AuthGuard>}>
+              <Route path="/factory-map" element={<FactoryMapPage />} />
               <Route path="/dashboard" element={<DashboardHome />} />
               {/* 기초정보 */}
               <Route path="/master/items" element={<L><RoleGuard module="inventory"><ItemListPage /></RoleGuard></L>} />
@@ -115,6 +118,7 @@ function App() {
               <Route path="/rnd/formulas" element={<L><RoleGuard module="rnd"><FormulaListPage /></RoleGuard></L>} />
               <Route path="/rnd/formulas/:id" element={<L><RoleGuard module="rnd"><FormulaDetailPage /></RoleGuard></L>} />
               {/* 생산 */}
+              <Route path="/production/plan-main" element={<L><RoleGuard module="production"><ProductionPlanMainPage /></RoleGuard></L>} />
               <Route path="/production/plans" element={<L><RoleGuard module="production"><ProductionPlanPage /></RoleGuard></L>} />
               <Route path="/production/work-orders" element={<L><RoleGuard module="production"><WorkOrderListPage /></RoleGuard></L>} />
               <Route path="/production/bom" element={<L><RoleGuard module="production"><BomListPage /></RoleGuard></L>} />
@@ -164,8 +168,8 @@ function App() {
               <Route path="/admin/users" element={<L><RoleGuard ceoOnly><UserManagePage /></RoleGuard></L>} />
               <Route path="/admin/audit" element={<RoleGuard ceoOnly><Placeholder title="감사로그" /></RoleGuard>} />
             </Route>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/factory-map" replace />} />
+            <Route path="*" element={<Navigate to="/factory-map" replace />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

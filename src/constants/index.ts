@@ -21,6 +21,13 @@ export const LOT_PREFIX = {
 /** 사이드바 메뉴 구조 */
 export const SIDEBAR_MENUS = [
   {
+    id: 'factory-map',
+    label: '🏭 공장 현황판',
+    icon: 'Factory',
+    path: '/factory-map',
+    module: null,
+  },
+  {
     id: 'dashboard',
     label: '대시보드',
     icon: 'LayoutDashboard',
@@ -64,6 +71,7 @@ export const SIDEBAR_MENUS = [
     label: '생산관리',
     icon: 'Factory',
     children: [
+      { id: 'plan-main', label: '📋 수주/생산계획', path: '/production/plan-main', module: 'production' as const },
       { id: 'plans', label: '생산계획(MPS)', path: '/production/plans', module: 'production' as const },
       { id: 'work-orders', label: '작업지시서', path: '/production/work-orders', module: 'production' as const },
       { id: 'bom', label: 'BOM 관리', path: '/production/bom', module: 'production' as const },
