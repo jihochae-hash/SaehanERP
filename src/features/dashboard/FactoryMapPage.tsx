@@ -145,7 +145,19 @@ const DEPT_ZONES: DeptZone[] = [
 export default function FactoryMapPage() {
   const navigate = useNavigate()
   const [hoveredDept, setHoveredDept] = useState<string | null>(null)
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const imgRef = useRef<HTMLImageElement>(null)
+
+  /** 마우스 진입: 즉시 표시 + 기존 타이머 취소 */
+  const handleDeptEnter = useCallback((id: string) => {
+    if (leaveTimerRef.current) { clearTimeout(leaveTimerRef.current); leaveTimerRef.current = null }
+    setHoveredDept(id)
+  }, [])
+
+  /** 마우스 이탈: 300ms 후 닫기 (팝업에 다시 진입하면 취소됨) */
+  const handleDeptLeave = useCallback(() => {
+    leaveTimerRef.current = setTimeout(() => setHoveredDept(null), 300)
+  }, [])
   const containerRef = useRef<HTMLDivElement>(null)
   const [imgRect, setImgRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null)
 
@@ -235,8 +247,8 @@ export default function FactoryMapPage() {
                     width: `${zone.w}%`,
                     height: `${zone.h}%`,
                   }}
-                  onMouseEnter={() => setHoveredDept(zone.id)}
-                  onMouseLeave={() => setHoveredDept(null)}
+                  onMouseEnter={() => handleDeptEnter(zone.id)}
+                  onMouseLeave={handleDeptLeave}
                 >
                   {/* 핫스팟 영역 */}
                   <div
