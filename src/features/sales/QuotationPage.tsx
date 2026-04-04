@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { orderBy, where } from 'firebase/firestore'
 import { Button, Card, Table, Modal, Input, Select, Badge } from '@/components/ui'
 import { useCollection, useCreateDocument, useUpdateDocument } from '@/hooks/useFirestore'
@@ -89,6 +89,56 @@ export default function QuotationPage() {
   const updateMutation = useUpdateDocument('salesOrders')
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<QuotationForm>()
+
+  /** 견적서 인쇄 (새 창에서 A4 양식으로 인쇄/PDF 저장) */
+  const handlePrint = useCallback((q: Quotation) => {
+    const pw = window.open('', '_blank', 'width=800,height=1000')
+    if (!pw) return
+    const rows = (q.items ?? []).map((it, i) =>
+      `<tr><td class="c">${i+1}</td><td>${it.itemCode}</td><td>${it.itemName}</td><td class="c">${it.unit}</td><td class="r">${it.quantity.toLocaleString()}</td><td class="r">${it.unitPrice.toLocaleString()}</td><td class="r">${it.amount.toLocaleString()}</td></tr>`
+    ).join('')
+    const supply = q.totalAmount
+    const tax = Math.round(supply * 0.1)
+    const total = supply + tax
+    pw.document.write(`<!DOCTYPE html><html><head><title>견적서 - ${q.quotationNo}</title>
+<style>
+@page{size:A4;margin:15mm}
+body{font-family:'Malgun Gothic',sans-serif;color:#333;padding:20px;margin:0}
+h1{text-align:center;font-size:28px;color:#0d9488;letter-spacing:8px;border-bottom:3px double #0d9488;padding-bottom:12px}
+.row{display:flex;justify-content:space-between;margin:15px 0}
+.box{border:2px solid #0d9488;border-radius:8px;padding:12px;width:48%}
+.lb{font-weight:bold;color:#555;width:70px;display:inline-block;font-size:13px}
+.vl{font-size:13px}
+table.items{width:100%;border-collapse:collapse;margin:15px 0}
+table.items th{border:1px solid #0d9488;background:#f0fdfa;padding:8px;font-size:12px;color:#0d9488}
+table.items td{border:1px solid #ddd;padding:7px;font-size:12px}
+.c{text-align:center}.r{text-align:right}
+.sum{display:flex;justify-content:flex-end;margin:10px 0}
+.sum td{padding:5px 15px;font-size:13px}
+.sum .lb2{font-weight:bold;text-align:right;color:#555}
+.gt{font-size:18px;color:#0d9488;font-weight:bold}
+.ft{margin-top:40px;display:flex;justify-content:space-between;font-size:12px;color:#666}
+.stamp{text-align:center;width:200px;border-top:1px solid #333;margin-top:60px;padding-top:5px}
+.co{font-size:11px;color:#666;text-align:center;border-top:1px solid #ddd;padding-top:10px;margin-top:30px}
+.note{font-size:12px;color:#666;padding:10px;background:#f9fafb;border-radius:5px;margin:10px 0}
+.btns{text-align:center;margin-top:20px}
+.btns button{padding:10px 30px;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin:0 5px}
+@media print{.btns{display:none!important}}
+</style></head><body>
+<h1>견 적 서</h1>
+<div class="row">
+  <div style="width:48%"><p><span class="lb">견적번호</span><span class="vl">${q.quotationNo}</span></p><p><span class="lb">견적일자</span><span class="vl">${q.quotationDate}</span></p><p><span class="lb">유효기한</span><span class="vl">${q.validUntil}</span></p></div>
+  <div class="box"><p><span class="lb">거래처</span><span class="vl" style="font-size:16px;font-weight:bold">${q.customerName} 귀하</span></p></div>
+</div>
+<table class="items"><thead><tr><th style="width:35px">No</th><th style="width:90px">품목코드</th><th>품목명</th><th style="width:45px">단위</th><th style="width:65px">수량</th><th style="width:90px">단가</th><th style="width:100px">금액</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="sum"><table><tr><td class="lb2">공급가액</td><td class="r">₩${supply.toLocaleString()}</td></tr><tr><td class="lb2">부가세(10%)</td><td class="r">₩${tax.toLocaleString()}</td></tr><tr style="border-top:2px solid #333"><td class="lb2" style="padding-top:8px">합계금액</td><td class="r gt" style="padding-top:8px">₩${total.toLocaleString()}</td></tr></table></div>
+${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
+<div class="ft"><div>위와 같이 견적합니다.</div><div class="stamp">(주)새한화장품</div></div>
+<div class="co">(주)새한화장품 | Sae Han Cosmetics Co., Ltd.</div>
+<div class="btns"><button onclick="window.print()" style="background:#0d9488;color:white">인쇄 / PDF 저장</button><button onclick="window.close()" style="background:#6b7280;color:white">닫기</button></div>
+</body></html>`)
+    pw.document.close()
+  }, [])
   const { register: regItem, handleSubmit: handleItem, reset: resetItem } = useForm<ItemForm>()
 
   const customerOptions = partners
@@ -196,12 +246,13 @@ export default function QuotationPage() {
     {
       key: 'actions',
       label: '',
-      width: '80px',
+      width: '140px',
       sortable: false,
       render: (_: unknown, row: Quotation) => (
-        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(row) }}>
-          수정
-        </Button>
+        <div className="flex gap-1">
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(row) }}>수정</Button>
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handlePrint(row) }}>인쇄</Button>
+        </div>
       ),
     },
   ]
