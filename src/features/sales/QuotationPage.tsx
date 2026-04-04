@@ -269,12 +269,12 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
     {
       key: 'actions',
       label: '',
-      width: '140px',
+      width: '160px',
       sortable: false,
       render: (_: unknown, row: Quotation) => (
         <div className="flex gap-1">
           <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(row) }}>수정</Button>
-          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handlePrint(row) }}>인쇄</Button>
+          <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); handlePrint(row) }}>🖨 인쇄</Button>
         </div>
       ),
     },
