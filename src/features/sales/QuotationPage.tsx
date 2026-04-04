@@ -9,6 +9,9 @@ import { formatDate, formatNumber } from '@/utils/format'
 
 type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected'
 
+/** 품목 구분: product(제품), sub_material(부자재) */
+type QuotationItemCategory = 'product' | 'sub_material'
+
 interface QuotationItem {
   itemCode: string
   itemName: string
@@ -16,7 +19,12 @@ interface QuotationItem {
   quantity: number
   unitPrice: number
   amount: number
+  /** 품목 구분 */
+  category: QuotationItemCategory
 }
+
+/** 부자재 금액 포함 방식 */
+type SubMaterialMode = 'include' | 'exclude' | 'reference'
 
 interface Quotation {
   id: string
@@ -28,6 +36,8 @@ interface Quotation {
   validUntil: string
   items: QuotationItem[]
   totalAmount: number
+  /** 부자재 금액 처리: include(합산), exclude(제외), reference(참고기재) */
+  subMaterialMode: SubMaterialMode
   status: QuotationStatus
   notes: string | null
   createdAt: unknown
@@ -57,11 +67,18 @@ const STATUS_BADGE: Record<QuotationStatus, { label: string; color: 'gray' | 'bl
   rejected: { label: '거절', color: 'red' },
 }
 
+const SUB_MATERIAL_MODE_OPTIONS = [
+  { value: 'include', label: '부자재 금액 포함 (합산)' },
+  { value: 'exclude', label: '부자재 금액 제외' },
+  { value: 'reference', label: '부자재 참고 기재만' },
+]
+
 interface QuotationForm {
   quotationNo: string
   customerId: string
   quotationDate: string
   validUntil: string
+  subMaterialMode: SubMaterialMode
   status: QuotationStatus
   notes: string
 }
@@ -70,6 +87,7 @@ interface ItemForm {
   itemId: string
   quantity: string
   unitPrice: string
+  category: QuotationItemCategory
 }
 
 export default function QuotationPage() {
@@ -88,7 +106,7 @@ export default function QuotationPage() {
   const createMutation = useCreateDocument('salesOrders')
   const updateMutation = useUpdateDocument('salesOrders')
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<QuotationForm>()
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<QuotationForm>()
 
   /** 견적서 인쇄 (새 창에서 A4 양식으로 인쇄/PDF 저장) */
   const handlePrint = useCallback((q: Quotation) => {
@@ -150,7 +168,7 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
   const openCreate = () => {
     setEditing(null)
     setQuotationItems([])
-    reset({ quotationNo: '', customerId: '', quotationDate: '', validUntil: '', status: 'draft', notes: '' })
+    reset({ quotationNo: '', customerId: '', quotationDate: '', validUntil: '', subMaterialMode: 'include', status: 'draft', notes: '' })
     setModalOpen(true)
   }
 
@@ -162,6 +180,7 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
       customerId: q.customerId,
       quotationDate: q.quotationDate,
       validUntil: q.validUntil,
+      subMaterialMode: q.subMaterialMode ?? 'include',
       status: q.status,
       notes: q.notes ?? '',
     })
@@ -182,6 +201,7 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
         quantity: qty,
         unitPrice: price,
         amount: qty * price,
+        category: data.category ?? 'product',
       },
     ])
     resetItem()
@@ -190,7 +210,9 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
 
   const onSave = async (data: QuotationForm) => {
     const partner = partners.find((p) => p.id === data.customerId)
-    const totalAmount = quotationItems.reduce((sum, i) => sum + i.amount, 0)
+    const productTotal = quotationItems.filter((i) => i.category === 'product').reduce((s, i) => s + i.amount, 0)
+    const subMaterialTotal = quotationItems.filter((i) => i.category === 'sub_material').reduce((s, i) => s + i.amount, 0)
+    const totalAmount = data.subMaterialMode === 'include' ? productTotal + subMaterialTotal : productTotal
     const payload = {
       type: 'quotation',
       quotationNo: data.quotationNo,
@@ -198,6 +220,7 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
       customerName: partner?.name ?? '',
       quotationDate: data.quotationDate,
       validUntil: data.validUntil,
+      subMaterialMode: data.subMaterialMode,
       status: data.status,
       items: quotationItems,
       totalAmount,
@@ -257,7 +280,16 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
     },
   ]
 
+  const productItems = quotationItems.filter((i) => i.category === 'product')
+  const subMaterialItems = quotationItems.filter((i) => i.category === 'sub_material')
+  const productTotal = productItems.reduce((s, i) => s + i.amount, 0)
+  const subMaterialTotal = subMaterialItems.reduce((s, i) => s + i.amount, 0)
+
   const itemColumns = [
+    {
+      key: 'category', label: '구분', width: '70px',
+      render: (val: unknown) => <Badge color={val === 'product' ? 'blue' : 'yellow'}>{val === 'product' ? '제품' : '부자재'}</Badge>,
+    },
     { key: 'itemCode', label: '품목코드', width: '100px' },
     { key: 'itemName', label: '품목명' },
     { key: 'quantity', label: '수량', width: '80px' },
@@ -270,13 +302,7 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
       width: '60px',
       sortable: false,
       render: (_: unknown, row: QuotationItem) => (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setQuotationItems((p) => p.filter((i) => i.itemCode !== row.itemCode))}
-        >
-          삭제
-        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setQuotationItems((p) => p.filter((i) => i.itemCode !== row.itemCode))}>삭제</Button>
       ),
     },
   ]
@@ -298,9 +324,12 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
             <Input label="견적번호 *" error={errors.quotationNo?.message} {...register('quotationNo', { required: '필수' })} />
             <Select label="거래처 *" options={customerOptions} placeholder="거래처 선택" error={errors.customerId?.message} {...register('customerId', { required: '필수' })} />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Input label="견적일 *" type="date" {...register('quotationDate', { required: '필수' })} />
             <Input label="유효기한 *" type="date" {...register('validUntil', { required: '필수' })} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Select label="부자재 금액 처리" options={SUB_MATERIAL_MODE_OPTIONS} {...register('subMaterialMode')} />
             <Select label="상태" options={Object.entries(STATUS_BADGE).map(([v, i]) => ({ value: v, label: i.label }))} {...register('status')} />
           </div>
           <div className="border-t pt-4">
@@ -310,8 +339,19 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
             </div>
             <Table columns={itemColumns} data={quotationItems} keyField="itemCode" emptyMessage="품목을 추가하세요." />
             {quotationItems.length > 0 && (
-              <div className="mt-2 text-right text-sm font-semibold">
-                합계: ₩{formatNumber(quotationItems.reduce((s, i) => s + i.amount, 0))}
+              <div className="mt-3 space-y-1 text-right text-sm">
+                <div>제품 소계: <span className="font-semibold">₩{formatNumber(productTotal)}</span></div>
+                {subMaterialItems.length > 0 && (
+                  <div className="text-gray-500">
+                    부자재 소계: <span className="font-semibold">₩{formatNumber(subMaterialTotal)}</span>
+                    <span className="text-xs ml-1">
+                      ({watch('subMaterialMode') === 'include' ? '합산' : watch('subMaterialMode') === 'exclude' ? '제외' : '참고'})
+                    </span>
+                  </div>
+                )}
+                <div className="border-t pt-1 font-bold text-base">
+                  견적 합계: ₩{formatNumber(watch('subMaterialMode') === 'include' ? productTotal + subMaterialTotal : productTotal)}
+                </div>
               </div>
             )}
           </div>
@@ -328,7 +368,10 @@ ${q.notes ? `<div class="note"><b>비고:</b> ${q.notes}</div>` : ''}
       {/* 품목 추가 모달 */}
       <Modal isOpen={isItemModal} onClose={() => setItemModal(false)} title="품목 추가">
         <form onSubmit={handleItem(onAddItem)} className="space-y-4">
-          <Select label="품목 *" options={itemOptions} placeholder="품목 선택" {...regItem('itemId', { required: true })} />
+          <div className="grid grid-cols-2 gap-4">
+            <Select label="구분 *" options={[{ value: 'product', label: '제품' }, { value: 'sub_material', label: '부자재' }]} {...regItem('category')} />
+            <Select label="품목 *" options={itemOptions} placeholder="품목 선택" {...regItem('itemId', { required: true })} />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="수량 *" type="number" step="0.01" {...regItem('quantity', { required: true })} />
             <Input label="단가 (원) *" type="number" {...regItem('unitPrice', { required: true })} />
